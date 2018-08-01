@@ -73,6 +73,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   uninit() {
+    this.stories = null;
     Services.obs.removeObserver(this, "idle-daily");
     SectionsManager.disableSection(SECTION_ID);
   }

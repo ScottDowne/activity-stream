@@ -48,9 +48,25 @@ export class _Base extends React.PureComponent {
     this.updateTheme();
   }
 
-  componentWillUpdate({App}) {
+  hasSectionChanged(nextProps) {
+    if (this.props.Sections[0] && this.props.Sections[0].options) {
+      if (nextProps.Sections[0].options.show_spocs !== this.props.Sections[0].options.show_spocs || nextProps.Sections[0].options.stories_endpoint !== this.props.Sections[0].options.stories_endpoint) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  componentWillUpdate(nextProps) {
     this.updateTheme();
-    this.sendNewTabRehydrated(App);
+    if (this.hasSectionChanged(nextProps)) {
+      this.renderNotified = false;
+    }
+    this.sendNewTabRehydrated(nextProps.App);
+
+    /*
+{"api_key_pref":"extensions.pocket.oAuthConsumerKey","hidden":false,"provider_icon":"pocket","provider_name":"Pocket","read_more_endpoint":"https://getpocket.com/explore/trending?src=fx_new_tab","stories_endpoint":"file:///home/scott/spoc.json","stories_referrer":"https://getpocket.com/recommendations","topics_endpoint":"https://getpocket.cdn.mozilla.net/v3/firefox/trending-topics?version=2&consumer_key=$apiKey&locale_lang=en-US","show_spocs":true,"personalized":true}
+    */
   }
 
   updateTheme() {
@@ -154,4 +170,4 @@ export class BaseContent extends React.PureComponent {
   }
 }
 
-export const Base = connect(state => ({App: state.App, Prefs: state.Prefs}))(_Base);
+export const Base = connect(state => ({App: state.App, Prefs: state.Prefs, Sections: state.Sections}))(_Base);
