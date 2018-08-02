@@ -147,7 +147,9 @@ describe("Top Stories Feed", () => {
   });
   describe("#uninit", () => {
     it("should disable its section", () => {
+      instance.storiesLoaded = true;
       instance.onAction({type: at.UNINIT});
+      assert.equal(instance.storiesLoaded, false);
       assert.calledOnce(sectionsManagerStub.disableSection);
       assert.calledWith(sectionsManagerStub.disableSection, SECTION_ID);
     });

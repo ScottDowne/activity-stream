@@ -49,8 +49,16 @@ export class _Base extends React.PureComponent {
   }
 
   hasSectionChanged(nextProps) {
-    if (this.props.Sections[0] && this.props.Sections[0].options) {
-      if (nextProps.Sections[0].options.show_spocs !== this.props.Sections[0].options.show_spocs || nextProps.Sections[0].options.stories_endpoint !== this.props.Sections[0].options.stories_endpoint) {
+    const [nPropsSections] = nextProps.Sections;
+    const [tPropsSections] = this.props.Sections;
+    if (nPropsSections && nPropsSections.options) {
+      if (!tPropsSections || !tPropsSections.options) {
+        return true;
+      }
+      if (nPropsSections.options.show_spocs !== tPropsSections.options.show_spocs) {
+        return true;
+      }
+      if (nPropsSections.options.stories_endpoint !== tPropsSections.options.stories_endpoint) {
         return true;
       }
     }
@@ -63,10 +71,6 @@ export class _Base extends React.PureComponent {
       this.renderNotified = false;
     }
     this.sendNewTabRehydrated(nextProps.App);
-
-    /*
-{"api_key_pref":"extensions.pocket.oAuthConsumerKey","hidden":false,"provider_icon":"pocket","provider_name":"Pocket","read_more_endpoint":"https://getpocket.com/explore/trending?src=fx_new_tab","stories_endpoint":"file:///home/scott/spoc.json","stories_referrer":"https://getpocket.com/recommendations","topics_endpoint":"https://getpocket.cdn.mozilla.net/v3/firefox/trending-topics?version=2&consumer_key=$apiKey&locale_lang=en-US","show_spocs":true,"personalized":true}
-    */
   }
 
   updateTheme() {

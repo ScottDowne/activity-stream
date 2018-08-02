@@ -73,7 +73,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   uninit() {
-    this.stories = null;
+    this.storiesLoaded = false;
     Services.obs.removeObserver(this, "idle-daily");
     SectionsManager.disableSection(SECTION_ID);
   }
@@ -101,6 +101,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
       this.dispatchUpdateEvent(this.storiesLastUpdated, {rows: this.stories});
       this.storiesLastUpdated = Date.now();
+      this.storiesLoaded = true;
       body._timestamp = this.storiesLastUpdated;
       // This is filtered so an update function can return true to retry on the next run
       this.contentUpdateQueue = this.contentUpdateQueue.filter(update => update());
@@ -321,7 +322,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       return false;
     };
 
-    if (this.stories) {
+    if (this.storiesLoaded) {
       updateContent();
     } else {
       // Delay updating tab content until initial data has been fetched
