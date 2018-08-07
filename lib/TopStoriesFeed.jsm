@@ -67,17 +67,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
         shouldBroadcast = true;
         await this.fetchTopics();
       }
-
-      let updateProps = {};
-      if (this.stories) {
-        updateProps = {rows: this.stories};
-      }
-      if (this.topics) {
-        updateProps = {...updateProps, topics: this.topics, read_more_endpoint: this.read_more_endpoint};
-      }
-
-      // We should only be calling this once per init.
-      this.dispatchUpdateEvent(shouldBroadcast, updateProps);
+      this.doContentUpdate(shouldBroadcast);
       this.storiesLoaded = true;
 
       // This is filtered so an update function can return true to retry on the next run
@@ -90,9 +80,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   init() {
-    SectionsManager.onceInitialized(() => {
-      this.onInit();
-    });
+    SectionsManager.onceInitialized(this.onInit.bind(this));
   }
 
   observe(subject, topic, data) {
@@ -109,6 +97,19 @@ this.TopStoriesFeed = class TopStoriesFeed {
     this.cache.set("topics", {});
     Services.obs.removeObserver(this, "idle-daily");
     SectionsManager.disableSection(SECTION_ID);
+  }
+
+  doContentUpdate(shouldBroadcast) {
+    let updateProps = {};
+    if (this.stories) {
+      updateProps.rows = this.stories;
+    }
+    if (this.topics) {
+      Object.assign(updateProps, {topics: this.topics, read_more_endpoint: this.read_more_endpoint});
+    }
+
+    // We should only be calling this once per init.
+    this.dispatchUpdateEvent(shouldBroadcast, updateProps);
   }
 
   async fetchStories() {
@@ -478,7 +479,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   async onAction(action) {
-    let updateProps = {};
     switch (action.type) {
       case at.INIT:
         this.init();
@@ -491,13 +491,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
           await this.fetchTopics();
         }
 
-        if (this.stories) {
-          updateProps = {rows: this.stories};
-        }
-        if (this.topics) {
-          updateProps = {...updateProps, topics: this.topics, read_more_endpoint: this.read_more_endpoint};
-        }
-        this.dispatchUpdateEvent(false, updateProps);
+        this.doContentUpdate(false);
         break;
       case at.UNINIT:
         this.uninit();
