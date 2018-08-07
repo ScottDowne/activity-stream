@@ -569,6 +569,13 @@ describe("Top Stories Feed", () => {
     });
     it("should not insert spoc if preffed off", async () => {
       let fetchStub = globals.sandbox.stub();
+      sectionsManagerStub.sections.set("topstories", {
+        options: {
+          show_spocs: false,
+          personalized: true,
+          stories_endpoint: "stories-endpoint"
+        }
+      });
       globals.set("fetch", fetchStub);
       globals.set("NewTabUtils", {blockedLinks: {isBlocked: globals.sandbox.spy()}});
 
@@ -576,18 +583,26 @@ describe("Top Stories Feed", () => {
         "settings": {"spocsPerNewTabs": 0.5},
         "spocs": [{"id": "spoc1"}, {"id": "spoc2"}]
       };
+      sinon.spy(instance, "maybeAddSpoc");
+      sinon.spy(instance, "shouldShowSpocs");
 
-      instance.personalized = true;
-      instance.show_spocs = false;
-      instance.stories_endpoint = "stories-endpoint";
       fetchStub.resolves({ok: true, status: 200, json: () => Promise.resolve(response)});
-      await instance.fetchStories();
+      await instance.onInit();
 
       instance.onAction({type: at.NEW_TAB_REHYDRATED, meta: {fromTarget: {}}});
+      assert.calledOnce(instance.maybeAddSpoc);
+      assert.calledOnce(instance.shouldShowSpocs);
       assert.notCalled(instance.store.dispatch);
     });
     it("should not insert spoc if user opted out", async () => {
       let fetchStub = globals.sandbox.stub();
+      sectionsManagerStub.sections.set("topstories", {
+        options: {
+          show_spocs: true,
+          personalized: true,
+          stories_endpoint: "stories-endpoint"
+        }
+      });
       globals.set("fetch", fetchStub);
       globals.set("NewTabUtils", {blockedLinks: {isBlocked: globals.sandbox.spy()}});
 
@@ -596,18 +611,22 @@ describe("Top Stories Feed", () => {
         "spocs": [{"id": "spoc1"}, {"id": "spoc2"}]
       };
 
-      instance.personalized = true;
-      instance.show_spocs = true;
-      instance.stories_endpoint = "stories-endpoint";
       instance.store.getState = () => ({Sections: [{id: "topstories", rows: response.recommendations}], Prefs: {values: {showSponsored: false}}});
       fetchStub.resolves({ok: true, status: 200, json: () => Promise.resolve(response)});
-      await instance.fetchStories();
+      await instance.onInit();
 
       instance.onAction({type: at.NEW_TAB_REHYDRATED, meta: {fromTarget: {}}});
       assert.notCalled(instance.store.dispatch);
     });
     it("should not fail if there is no spoc", async () => {
       let fetchStub = globals.sandbox.stub();
+      sectionsManagerStub.sections.set("topstories", {
+        options: {
+          show_spocs: true,
+          personalized: true,
+          stories_endpoint: "stories-endpoint"
+        }
+      });
       globals.set("fetch", fetchStub);
       globals.set("NewTabUtils", {blockedLinks: {isBlocked: globals.sandbox.spy()}});
       globals.set("Math", {random: () => 0.4});
@@ -617,11 +636,8 @@ describe("Top Stories Feed", () => {
         "recommendations": [{"id": "rec1"}, {"id": "rec2"}, {"id": "rec3"}]
       };
 
-      instance.personalized = true;
-      instance.show_spocs = true;
-      instance.stories_endpoint = "stories-endpoint";
       fetchStub.resolves({ok: true, status: 200, json: () => Promise.resolve(response)});
-      await instance.fetchStories();
+      await instance.onInit();
 
       instance.onAction({type: at.NEW_TAB_REHYDRATED, meta: {fromTarget: {}}});
       assert.notCalled(instance.store.dispatch);
@@ -660,6 +676,12 @@ describe("Top Stories Feed", () => {
     });
     it("should not record spoc/campaign impressions for non-view impressions", async () => {
       let fetchStub = globals.sandbox.stub();
+      sectionsManagerStub.sections.set("topstories", {
+        options: {
+          show_spocs: true,
+          stories_endpoint: "stories-endpoint"
+        }
+      });
       globals.set("fetch", fetchStub);
       globals.set("NewTabUtils", {blockedLinks: {isBlocked: globals.sandbox.spy()}});
 
@@ -669,10 +691,8 @@ describe("Top Stories Feed", () => {
       };
 
       instance._prefs = {get: pref => undefined, set: sinon.spy()};
-      instance.show_spocs = true;
-      instance.stories_endpoint = "stories-endpoint";
       fetchStub.resolves({ok: true, status: 200, json: () => Promise.resolve(response)});
-      await instance.fetchStories();
+      await instance.onInit();
 
       instance.onAction({type: at.TELEMETRY_IMPRESSION_STATS, data: {click: 0, tiles: [{id: 1}]}});
       assert.notCalled(instance._prefs.set);
@@ -785,6 +805,13 @@ describe("Top Stories Feed", () => {
     });
     it("should maintain client-side MAX_LIFETIME_CAP", async () => {
       let fetchStub = globals.sandbox.stub();
+      sectionsManagerStub.sections.set("topstories", {
+        options: {
+          show_spocs: true,
+          personalized: true,
+          stories_endpoint: "stories-endpoint"
+        }
+      });
       globals.set("fetch", fetchStub);
       globals.set("NewTabUtils", {blockedLinks: {isBlocked: globals.sandbox.spy()}});
 
@@ -796,12 +823,9 @@ describe("Top Stories Feed", () => {
         ]
       };
 
-      instance.personalized = true;
-      instance.show_spocs = true;
-      instance.stories_endpoint = "stories-endpoint";
       instance.store.getState = () => ({Sections: [{id: "topstories", rows: response.recommendations}], Prefs: {values: {showSponsored: true}}});
       fetchStub.resolves({ok: true, status: 200, json: () => Promise.resolve(response)});
-      await instance.fetchStories();
+      await instance.onInit();
 
       instance._prefs.get = pref => JSON.stringify({1: [...Array(100).keys()]});
       instance.onAction({type: at.NEW_TAB_REHYDRATED, meta: {fromTarget: {}}});
@@ -828,6 +852,25 @@ describe("Top Stories Feed", () => {
       clock.tick(TOPICS_UPDATE_TIME);
       await instance.onAction({type: at.SYSTEM_TICK});
       assert.calledOnce(instance.fetchTopics);
+    });
+    it("should return updated stories and topics on system tick", async () => {
+      await instance.onInit();
+      sinon.spy(instance, "dispatchUpdateEvent");
+      instance.stories = [{"guid": "rec1"}, {"guid": "rec2"}, {"guid": "rec3"}];
+      instance.topics = {
+        "_timestamp": 123,
+        "topics": [{"name": "topic1", "url": "url-topic1"}, {"name": "topic2", "url": "url-topic2"}]
+      };
+      await instance.onAction({type: at.SYSTEM_TICK});
+      assert.calledOnce(instance.dispatchUpdateEvent);
+      assert.calledWith(instance.dispatchUpdateEvent, false, {
+        rows: [{"guid": "rec1"}, {"guid": "rec2"}, {"guid": "rec3"}],
+        topics: {
+          _timestamp: 123,
+          topics: [{"name": "topic1", "url": "url-topic1"}, {"name": "topic2", "url": "url-topic2"}]
+        },
+        read_more_endpoint: undefined
+      });
     });
     it("should update domain affinities on idle-daily, if personalization preffed on", () => {
       instance.init();
