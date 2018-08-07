@@ -131,8 +131,8 @@ this.TopStoriesFeed = class TopStoriesFeed {
         this.spocs = this.transform(body.spocs).filter(s => s.score >= s.min_score);
         this.cleanUpCampaignImpressionPref();
       }
-      body._timestamp = Date.now();
       this.storiesLastUpdated = Date.now();
+      body._timestamp = this.storiesLastUpdated;
       this.cache.set("stories", body);
     } catch (error) {
       Cu.reportError(`Failed to fetch content: ${error.message}`);
@@ -199,8 +199,8 @@ this.TopStoriesFeed = class TopStoriesFeed {
       const {topics} = body;
       if (topics) {
         this.topics = topics;
-        body._timestamp = Date.now();
         this.topicsLastUpdated = Date.now();
+        body._timestamp = this.topicsLastUpdated;
         this.cache.set("topics", body);
       }
     } catch (error) {
