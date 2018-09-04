@@ -86,6 +86,10 @@ const PREFS_CONFIG = new Map([
       use_cta: false
     })
   }],
+  ["affinityProviderV2", {
+    title: "Switch how we generate spocs and recs to version 2.",
+    value: false
+  }],
   ["filterAdult", {
     title: "Remove adult pages from sites, highlights, etc.",
     value: true

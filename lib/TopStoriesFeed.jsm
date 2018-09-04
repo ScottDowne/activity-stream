@@ -13,6 +13,7 @@ const {Prefs} = ChromeUtils.import("resource://activity-stream/lib/ActivityStrea
 const {shortURL} = ChromeUtils.import("resource://activity-stream/lib/ShortURL.jsm", {});
 const {SectionsManager} = ChromeUtils.import("resource://activity-stream/lib/SectionsManager.jsm", {});
 const {UserDomainAffinityProvider} = ChromeUtils.import("resource://activity-stream/lib/UserDomainAffinityProvider.jsm", {});
+const {PersonalityProvider} = ChromeUtils.import("resource://activity-stream/lib/PersonalityProvider.jsm", {});
 const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm", {});
 
 ChromeUtils.defineModuleGetter(this, "perfService", "resource://activity-stream/common/PerfService.jsm");
@@ -123,6 +124,14 @@ this.TopStoriesFeed = class TopStoriesFeed {
     this.dispatchUpdateEvent(shouldBroadcast, updateProps);
   }
 
+  affinityProividerSwitcher(...args) {
+    let AffinityProvider = UserDomainAffinityProvider;
+    if (this.affinityProviderV2) {
+      AffinityProvider = PersonalityProvider;
+    }
+    return new AffinityProvider(...args);
+  }
+
   async fetchStories() {
     if (!this.stories_endpoint) {
       return;
@@ -161,7 +170,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
     let affinities = data.domainAffinities;
     if (this.personalized && affinities && affinities.scores) {
-      this.affinityProvider = new UserDomainAffinityProvider(affinities.timeSegments,
+      this.affinityProvider = this.affinityProividerSwitcher(affinities.timeSegments,
         affinities.parameterSets, affinities.maxHistoryQueryResults, affinities.version, affinities.scores);
       this.domainAffinitiesLastUpdated = affinities._timestamp;
     }
@@ -258,7 +267,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
     const start = perfService.absNow();
 
-    this.affinityProvider = new UserDomainAffinityProvider(
+    this.affinityProvider = this.affinityProividerSwitcher(
       this.timeSegments,
       this.domainAffinityParameterSets,
       this.maxHistoryQueryResults,
@@ -572,6 +581,11 @@ this.TopStoriesFeed = class TopStoriesFeed {
         }
         if (action.data.name === "pocketCta") {
           this.dispatchPocketCta(action.data.value, true);
+        }
+        if (action.data.name === "affinityProviderV2") {
+          this.affinityProviderV2 = action.data.value;
+          this.uninit();
+          this.init();
         }
         break;
     }
