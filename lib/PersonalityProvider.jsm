@@ -22,8 +22,19 @@ ChromeUtils.defineModuleGetter(this, "NewTabUtils",
  */
 this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityProvider {
   // This is just a stub for now, extending UserDomainAffinityProvider until we flesh it out.
-  constructor(...args) {
-    super(...args);
+  constructor(
+    timeSegments,
+    parameterSets,
+    maxHistoryQueryResults,
+    version,
+    scores,
+    modelKeys) {
+    super(
+      timeSegments,
+      parameterSets,
+      maxHistoryQueryResults,
+      version,
+      scores);
     this.interestVectorStore = new PersistentCache("interest-vector", true);
   }
 
