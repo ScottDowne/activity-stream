@@ -20,6 +20,11 @@ function getFormattedMessage(message) {
 }
 
 export class Section extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {};
+  }
+
   get numRows() {
     const {rowsPref, maxRows, Prefs} = this.props;
     return rowsPref ? Prefs.values[rowsPref] : maxRows;
@@ -82,6 +87,7 @@ export class Section extends React.PureComponent {
     if (this.props.rows.length && !this.props.pref.collapsed) {
       this.sendImpressionStatsOrAddListener();
     }
+    this.maybeAddSpoc();
   }
 
   componentDidUpdate(prevProps) {
@@ -101,11 +107,28 @@ export class Section extends React.PureComponent {
     ) {
       this.sendImpressionStatsOrAddListener();
     }
+    const sectionsSpocs = this.props.spocs || {};
+    const prevSectionsSpocs = prevProps.spocs || {};
+    if (sectionsSpocs.spocsPerNewTabs !== prevSectionsSpocs.spocsPerNewTabs ||
+      sectionsSpocs.show_spocs !== prevSectionsSpocs.show_spocs) {
+      this.maybeAddSpoc();
+    }
   }
 
   componentWillUnmount() {
     if (this._onVisibilityChange) {
       this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+    }
+  }
+
+  maybeAddSpoc() {
+    const sectionsSpocs = this.props.spocs || {};
+    const shouldShowSpoc = !!this.state.shouldShowSpoc;
+    const spocsPerNewTabs = sectionsSpocs.spocsPerNewTabs;
+    const show_spocs = !!sectionsSpocs.show_spocs;
+    const result = show_spocs && !!spocsPerNewTabs && (Math.random() <= spocsPerNewTabs);
+    if (result !== shouldShowSpoc) {
+      this.setState({shouldShowSpoc: result});
     }
   }
 
@@ -131,7 +154,8 @@ export class Section extends React.PureComponent {
       pref, privacyNoticeURL, isFirst, isLast
     } = this.props;
 
-    const waitingForSpoc = id === "topstories" && this.props.Pocket.waitingForSpoc;
+    const waitingForSpoc = id === "topstories" && !Pocket.spocs;
+    const spoc = Pocket.spocs && Pocket.spocs.spoc;
     const maxCardsPerRow = compactCards ? CARDS_PER_ROW_COMPACT_WIDE : CARDS_PER_ROW_DEFAULT;
     const {numRows} = this;
     const maxCards = maxCardsPerRow * numRows;
@@ -147,6 +171,10 @@ export class Section extends React.PureComponent {
       !shouldShowPocketCta);
 
     const realRows = rows.slice(0, maxCards);
+
+    if (!waitingForSpoc && maxCards > 2 && this.state.shouldShowSpoc && spoc) {
+      realRows.splice(2, 0, spoc);
+    }
 
     // The empty state should only be shown after we have initialized and there is no content.
     // Otherwise, we should show placeholders.

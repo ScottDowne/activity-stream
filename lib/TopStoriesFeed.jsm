@@ -50,8 +50,10 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.maxHistoryQueryResults = options.maxHistoryQueryResults;
       this.storiesLastUpdated = 0;
       this.topicsLastUpdated = 0;
-      this.storiesLoaded = false;
       this.domainAffinitiesLastUpdated = 0;
+
+      //Make sure this still works.
+      this.getPocketState(false);
       this.dispatchPocketCta(this._prefs.get("pocketCta"), false);
 
       // Cache is used for new page loads, which shouldn't have changed data.
@@ -65,11 +67,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
         await this.fetchTopics();
       }
       this.doContentUpdate(true);
-      this.storiesLoaded = true;
-
-      // This is filtered so an update function can return true to retry on the next run
-      this.contentUpdateQueue = this.contentUpdateQueue.filter(update => update());
-
+      this.doSpocUpdate();
       Services.obs.addObserver(this, "idle-daily");
     } catch (e) {
       Cu.reportError(`Problem initializing top stories feed: ${e.message}`);
@@ -95,19 +93,43 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   uninit() {
-    this.storiesLoaded = false;
     Services.obs.removeObserver(this, "idle-daily");
     SectionsManager.disableSection(SECTION_ID);
   }
 
-  getPocketState(target) {
+  getPocketState(shouldBroadcast) {
     const action = {type: at.POCKET_LOGGED_IN, data: pktApi.isUserLoggedIn()};
-    this.store.dispatch(ac.OnlyToOneContent(action, target));
+    this.store.dispatch(shouldBroadcast ? ac.BroadcastToContent(action) : ac.AlsoToPreloaded(action));
   }
 
   dispatchPocketCta(data, shouldBroadcast) {
     const action = {type: at.POCKET_CTA, data: JSON.parse(data)};
     this.store.dispatch(shouldBroadcast ? ac.BroadcastToContent(action) : ac.AlsoToPreloaded(action));
+  }
+
+  doSpocUpdate() {
+    if (!this.shouldShowSpocs()) {
+      return this.sendSpocUpdate({spoc: null});
+    }
+    if (!this.spocs || !this.spocs.length) {
+      // We have stories but no spocs so there's nothing to do
+      return this.sendSpocUpdate({spoc: null});
+    }
+
+    // Filter spocs based on frequency caps
+    const impressions = this.readImpressionsPref(SPOC_IMPRESSION_TRACKING_PREF);
+    const spocs = this.spocs.filter(s => this.isBelowFrequencyCap(impressions, s));
+
+    if (!spocs.length) {
+      // There's currently no spoc left to display
+      return this.sendSpocUpdate({spoc: null});
+    }
+    return this.sendSpocUpdate({spoc: spocs[0]});
+  }
+
+  sendSpocUpdate(data) {
+    const action = {type: at.POCKET_UPDATE_SPOCS, data: data};
+    this.store.dispatch(ac.BroadcastToContent(action));
   }
 
   doContentUpdate(shouldBroadcast) {
@@ -116,8 +138,10 @@ this.TopStoriesFeed = class TopStoriesFeed {
       updateProps.rows = this.stories;
     }
     if (this.topics) {
-      Object.assign(updateProps, {topics: this.topics, read_more_endpoint: this.read_more_endpoint});
+      updateProps = {...updateProps, topics: this.topics, read_more_endpoint: this.read_more_endpoint};
     }
+
+    updateProps.spocs = {show_spocs: this.shouldShowSpocs(), spocsPerNewTabs: this.spocsPerNewTabs};
 
     // We should only be calling this once per init.
     this.dispatchUpdateEvent(shouldBroadcast, updateProps);
@@ -333,58 +357,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
     return this.show_spocs && this.store.getState().Prefs.values.showSponsored;
   }
 
-  dispatchSpocDone(target) {
-    const action = {type: at.POCKET_WAITING_FOR_SPOC, data: false};
-    this.store.dispatch(ac.OnlyToOneContent(action, target));
-  }
-
-  maybeAddSpoc(target) {
-    const updateContent = () => {
-      if (!this.shouldShowSpocs()) {
-        this.dispatchSpocDone(target);
-        return false;
-      }
-      if (Math.random() > this.spocsPerNewTabs) {
-        this.dispatchSpocDone(target);
-        return false;
-      }
-      if (!this.spocs || !this.spocs.length) {
-        // We have stories but no spocs so there's nothing to do and this update can be
-        // removed from the queue.
-        this.dispatchSpocDone(target);
-        return false;
-      }
-
-      // Filter spocs based on frequency caps
-      const impressions = this.readImpressionsPref(SPOC_IMPRESSION_TRACKING_PREF);
-      const spocs = this.spocs.filter(s => this.isBelowFrequencyCap(impressions, s));
-
-      if (!spocs.length) {
-        // There's currently no spoc left to display
-        this.dispatchSpocDone(target);
-        return false;
-      }
-
-      // Create a new array with a spoc inserted at index 2
-      const section = this.store.getState().Sections.find(s => s.id === SECTION_ID);
-      let rows = section.rows.slice(0, this.stories.length);
-      rows.splice(2, 0, Object.assign(spocs[0], {pinned: true}));
-
-      // Send a content update to the target tab
-      const action = {type: at.SECTION_UPDATE, data: Object.assign({rows}, {id: SECTION_ID})};
-      this.store.dispatch(ac.OnlyToOneContent(action, target));
-      this.dispatchSpocDone(target);
-      return false;
-    };
-
-    if (this.storiesLoaded) {
-      updateContent();
-    } else {
-      // Delay updating tab content until initial data has been fetched
-      this.contentUpdateQueue.push(updateContent);
-    }
-  }
-
   // Frequency caps are based on campaigns, which may include multiple spocs.
   // We currently support two types of frequency caps:
   // - lifetime: Indicates how many times spocs from a campaign can be shown in total
@@ -523,10 +495,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
         break;
       case at.UNINIT:
         this.uninit();
-        break;
-      case at.NEW_TAB_REHYDRATED:
-        this.getPocketState(action.meta.fromTarget);
-        this.maybeAddSpoc(action.meta.fromTarget);
         break;
       case at.SECTION_OPTIONS_CHANGED:
         if (action.data === SECTION_ID) {
