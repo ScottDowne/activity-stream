@@ -12,6 +12,9 @@ const {NmfTextTagger} = ChromeUtils.import("resource://activity-stream/lib/NmfTe
 const {TfIdfVectorizer} = ChromeUtils.import("resource://activity-stream/lib/TfIdfVectorizer.jsm", {});
 const {RecipeExecutor} = ChromeUtils.import("resource://activity-stream/lib/RecipeExecutor.jsm", {});
 
+ChromeUtils.defineModuleGetter(this, "NewTabUtils",
+  "resource://gre/modules/NewTabUtils.jsm");
+
 /**
  * V2 provider builds and ranks an interest profile (also called an “interest vector”) off the browse history.
  * This allows Firefox to classify pages into topics, by examining the text found on the page.
@@ -81,6 +84,73 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
    */
   generateRecipeExecutor(tag) {
     return RecipeExecutor(this.generateTagger("nb", tag), this.generateTagger("nmf", tag));
+  }
+
+  /**
+   * Grabs a slice of browse history for building a interest vector
+   */
+  async function fetchHistory(columns, beginTimeSecs, endTimeSecs) {
+    let sql = `SELECT *
+    FROM moz_places
+    WHERE last_visit_data >= ${beginTimeSecs * 1000000}
+    AND last_visit_data < ${endTimeSecs * 1000000}`;
+    columns.forEach(requiredColumn => {
+      sql += ` AND ${requiredColumn} <> ""`
+    });
+
+    const history = await NewTabUtils.activityStreamProvider.executePlacesQuery(sql, {
+      columns: columns,
+      params: {}
+    });
+
+    return history;
+  }
+
+  /**
+   * Examines the user's browse history and returns an interest vector that
+   * describes the topics the user frequently browses.
+   */
+  createInterestVector() {
+    let interestVector = {}
+    let endTimeSecs = ((new Date()).getTime() / 1000);
+    let beginTimeSecs = endTime - this.interestConfig.history_limit_secs
+    let history = this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
+    for (let historyRec of history) {
+      let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
+      if (ivItem === null) {
+        continue;
+      }
+      interestVector = this.recipeExecutor.executeCombinerRecipe(
+        interestVector,
+        ivItem,
+        this.interestConfig.interest_combiner);
+      if (interestVector === null) {
+        break;
+      }
+    }
+    interestVector = this.recipeExecutor.executeRecipe(interestVector, this.interestConfig.interest_finalizer);
+    if (interestVector === null) {
+      throw new Error("interest vector failed to build");
+    }
+    return interestVector;
+  }
+
+  /**
+   * Calculates a score of a Pocket item when compared to the user's interest
+   * vector. Returns the score. Higher scores are better. Assumes this.interestVector
+   * is populated.
+   */
+  calculateItemRelevanceScore(pocketItem) {
+    let scorableItem = this.recipeExecutor.executeRecipe(pocketItem, this.interestConfig.item_to_rank_builder);
+    let rankingVector = JSON.parse(JSON.stringify(this.interestVector));
+    Object.keys(scorableItem).forEach(key => {
+      rankingVector[key] = scorableItem[key]
+    });
+    rankingVector = this.recipeExecutor.executeRecipe(rankingVector, this.interestConfig.item_ranker);
+    if rankingVector === null) {
+      return -1;
+    }
+    return rankingVector.score;
   }
 };
 
