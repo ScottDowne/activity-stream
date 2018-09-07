@@ -35,8 +35,8 @@ describe("Personality Provider", () => {
   let globals;
   let NaiveBayesTextTaggerStub;
   let NmfTextTaggerStub;
-  let TfIdfVectorizerStub;
   let RecipeExecutorStub;
+  let mockHistory;
 
   beforeEach(() => {
     globals = new GlobalOverrider();
@@ -50,17 +50,86 @@ describe("Personality Provider", () => {
 
     NaiveBayesTextTaggerStub = globals.sandbox.stub();
     NmfTextTaggerStub = globals.sandbox.stub();
-    TfIdfVectorizerStub = globals.sandbox.stub();
     RecipeExecutorStub = globals.sandbox.stub();
 
     ({PersonalityProvider} = injector({
       "lib/NaiveBayesTextTagger.jsm": {NaiveBayesTextTagger: NaiveBayesTextTaggerStub},
       "lib/NmfTextTagger.jsm": {NmfTextTagger: NmfTextTaggerStub},
-      "lib/TfIdfVectorizer.jsm": {TfIdfVectorizer: TfIdfVectorizerStub},
       "lib/RecipeExecutor.jsm": {RecipeExecutor: RecipeExecutorStub}
     }));
 
     instance = new PersonalityProvider(TIME_SEGMENTS, PARAMETER_SETS);
+
+    mockHistory = [
+      {
+        title: "automotive",
+        description: "something about automotive",
+        url: "http://example.com/automotive",
+        frecency: 10
+      },
+      {
+        title: "fashion",
+        description: "something about fashion",
+        url: "http://example.com/fashion",
+        frecency: 5
+      },
+      {
+        title: "tech",
+        description: "something about tech",
+        url: "http://example.com/tech",
+        frecency: 1
+      }
+    ];
+
+    instance.fetchHistory = (a, b, c) => mockHistory;
+
+    instance.interestConfig = {
+      history_item_builder: "history_item_builder",
+      interest_finalizer: "interest_finalizer",
+      item_to_rank_builder: "item_to_rank_builder",
+      item_ranker: "item_ranker",
+      interest_combiner: "interest_combiner"
+    };
+
+    // mock the RecipeExecutor
+    instance.recipeExecutor = {
+      executeRecipe: (item, recipe) => {
+        if (recipe === "history_item_builder") {
+          if (item.title === "fail") {
+            return null;
+          }
+          return {title: item.title, score: item.frecency, type: "history_item"};
+        } else if (recipe === "interest_finalizer") {
+          return {title: item.title, score: item.score * 100, type: "interest_vector"};
+        } else if (recipe === "item_to_rank_builder") {
+          if (item.title === "fail") {
+            return null;
+          }
+          return {title: item.title, item_score: item.score, type: "item_to_rank"};
+        } else if (recipe === "item_ranker") {
+          if ((item.tile === "fail") || (item.item_title === "fail")) {
+            return null;
+          }
+          return {title: item.title, score: item.item_score * item.score, type: "ranked_item"};
+        }
+        return null;
+      },
+      executeCombinerRecipe: (item1, item2, recipe) => {
+        if (recipe === "interest_combiner") {
+          if ((item1.title === "combiner_fail") || (item2.title === "combiner_fail")) {
+            return null;
+          }
+          if (item1.type === undefined) {
+            item1.type = "combined_iv";
+          }
+          if (item1.score === undefined) {
+            item1.score = 0;
+          }
+          return {type: item1.type, score: item1.score + item2.score};
+        }
+        return null;
+      }
+    };
   });
   afterEach(() => {
     globals.restore();
@@ -104,7 +173,6 @@ describe("Personality Provider", () => {
       const tagger = instance.generateTagger("nb", "sports");
 
       assert.calledOnce(NaiveBayesTextTaggerStub);
-      assert.calledOnce(TfIdfVectorizerStub);
       assert.calledOnce(instance.getModel);
       assert.notCalled(NmfTextTaggerStub);
       assert.calledWith(instance.getModel, "nb", "sports");
@@ -116,7 +184,6 @@ describe("Personality Provider", () => {
       const tagger = instance.generateTagger("nmf", "sports");
 
       assert.calledOnce(NmfTextTaggerStub);
-      assert.calledOnce(TfIdfVectorizerStub);
       assert.calledOnce(instance.getModel);
       assert.notCalled(NaiveBayesTextTaggerStub);
       assert.calledWith(instance.getModel, "nmf", "sports");
@@ -147,6 +214,33 @@ describe("Personality Provider", () => {
       assert.equal(firstCallArgs[1], "sports");
       assert.equal(secondCallArgs[0], "nmf");
       assert.equal(secondCallArgs[1], "sports");
+    });
+  });
+  describe("#createInterestVector", () => {
+    it("should gracefully handle history entries that fail", () => {
+      mockHistory.push({title: "fail"});
+      assert.isTrue(instance.createInterestVector() !== null);
+    });
+
+    it("should fail if the combiner fails", () => {
+      mockHistory.push({title: "combiner_fail", frecency: 111});
+      let actual = instance.createInterestVector();
+      assert.isTrue(actual === null);
+    });
+
+    it("should process history, combine, and finalize", () => {
+      let actual = instance.createInterestVector();
+      assert.equal(actual.score, 1600);
+    });
+  });
+  describe("#calculateItemRelevanceScore", () => {
+    it("it should return -1 for busted item", () => {
+      assert.equal(instance.calculateItemRelevanceScore({title: "fail"}), -1);
+    });
+    it("it should return a score, and not change with interestVector", () => {
+      instance.interestVector = {score: 10};
+      assert.equal(instance.calculateItemRelevanceScore({score: 2}), 20);
+      assert.deepEqual(instance.interestVector, {score: 10});
     });
   });
 });

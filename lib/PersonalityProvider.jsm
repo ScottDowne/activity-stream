@@ -89,17 +89,17 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
   /**
    * Grabs a slice of browse history for building a interest vector
    */
-  async function fetchHistory(columns, beginTimeSecs, endTimeSecs) {
+  async fetchHistory(columns, beginTimeSecs, endTimeSecs) {
     let sql = `SELECT *
     FROM moz_places
     WHERE last_visit_data >= ${beginTimeSecs * 1000000}
     AND last_visit_data < ${endTimeSecs * 1000000}`;
     columns.forEach(requiredColumn => {
-      sql += ` AND ${requiredColumn} <> ""`
+      sql += ` AND ${requiredColumn} <> ""`;
     });
 
     const history = await NewTabUtils.activityStreamProvider.executePlacesQuery(sql, {
-      columns: columns,
+      columns,
       params: {}
     });
 
@@ -111,9 +111,9 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
    * describes the topics the user frequently browses.
    */
   createInterestVector() {
-    let interestVector = {}
+    let interestVector = {};
     let endTimeSecs = ((new Date()).getTime() / 1000);
-    let beginTimeSecs = endTime - this.interestConfig.history_limit_secs
+    let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
     let history = this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
     for (let historyRec of history) {
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
@@ -125,14 +125,11 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
         ivItem,
         this.interestConfig.interest_combiner);
       if (interestVector === null) {
-        break;
+        return null;
       }
     }
-    interestVector = this.recipeExecutor.executeRecipe(interestVector, this.interestConfig.interest_finalizer);
-    if (interestVector === null) {
-      throw new Error("interest vector failed to build");
-    }
-    return interestVector;
+
+    return this.recipeExecutor.executeRecipe(interestVector, this.interestConfig.interest_finalizer);
   }
 
   /**
@@ -142,12 +139,15 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
    */
   calculateItemRelevanceScore(pocketItem) {
     let scorableItem = this.recipeExecutor.executeRecipe(pocketItem, this.interestConfig.item_to_rank_builder);
+    if (scorableItem === null) {
+      return -1;
+    }
     let rankingVector = JSON.parse(JSON.stringify(this.interestVector));
     Object.keys(scorableItem).forEach(key => {
-      rankingVector[key] = scorableItem[key]
+      rankingVector[key] = scorableItem[key];
     });
     rankingVector = this.recipeExecutor.executeRecipe(rankingVector, this.interestConfig.item_ranker);
-    if rankingVector === null) {
+    if (rankingVector === null) {
       return -1;
     }
     return rankingVector.score;
