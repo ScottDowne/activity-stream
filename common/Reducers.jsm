@@ -41,7 +41,6 @@ const INITIAL_STATE = {
   Pocket: {
     isUserLoggedIn: false,
     pocketCta: {}
-    //waitingForSpoc: true
   }
 };
 
@@ -392,8 +391,6 @@ function Snippets(prevState = INITIAL_STATE.Snippets, action) {
 
 function Pocket(prevState = INITIAL_STATE.Pocket, action) {
   switch (action.type) {
-    //case at.POCKET_WAITING_FOR_SPOC:
-    //  return {...prevState, waitingForSpoc: action.data};
     case at.POCKET_LOGGED_IN:
       return {...prevState, isUserLoggedIn: !!action.data};
     case at.POCKET_CTA:

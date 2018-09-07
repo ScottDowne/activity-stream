@@ -52,7 +52,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.topicsLastUpdated = 0;
       this.domainAffinitiesLastUpdated = 0;
 
-      //Make sure this still works.
+      //TODO: I broke this...
       this.getPocketState(false);
       this.dispatchPocketCta(this._prefs.get("pocketCta"), false);
 
