@@ -39,7 +39,6 @@ this.PersonalityProvider = class PersonalityProvider {
     // Either these functions know to check for cache and use it,
     // or we can pass it from the feed through this constructor.
     this.interestConfig = await this.getRecipe();
-    console.log(this.interestConfig);
     this.recipeExecutor = this.generateRecipeExecutor();
     this.interestVector = await this.createInterestVector();
     this.initialized = true;
@@ -97,8 +96,8 @@ this.PersonalityProvider = class PersonalityProvider {
   async fetchHistory(columns, beginTimeSecs, endTimeSecs) {
     let sql = `SELECT *
     FROM moz_places
-    WHERE last_visit_data >= ${beginTimeSecs * 1000000}
-    AND last_visit_data < ${endTimeSecs * 1000000}`;
+    WHERE last_visit_date >= ${beginTimeSecs * 1000000}
+    AND last_visit_date < ${endTimeSecs * 1000000}`;
     columns.forEach(requiredColumn => {
       sql += ` AND ${requiredColumn} <> ""`;
     });
