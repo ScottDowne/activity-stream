@@ -40,7 +40,7 @@ this.PersonalityProvider = class PersonalityProvider {
     // or we can pass it from the feed through this constructor.
     this.interestConfig = await this.getRecipe();
     this.recipeExecutor = this.generateRecipeExecutor();
-    this.interestVector = this.createInterestVector();
+    this.interestVector = await this.createInterestVector();
     this.initialized = true;
   }
 
@@ -114,13 +114,11 @@ this.PersonalityProvider = class PersonalityProvider {
    * Examines the user's browse history and returns an interest vector that
    * describes the topics the user frequently browses.
    */
-  createInterestVector() {
+  async createInterestVector() {
     let interestVector = {};
     let endTimeSecs = ((new Date()).getTime() / 1000);
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
-    let history = this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
-
-    console.log(history, "history");
+    let history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
 
     for (let historyRec of history) {
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
