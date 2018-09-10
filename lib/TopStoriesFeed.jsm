@@ -52,7 +52,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.topicsLastUpdated = 0;
       this.domainAffinitiesLastUpdated = 0;
 
-      //TODO: I broke this...
+      // TODO: I broke this...
       this.getPocketState(false);
       this.dispatchPocketCta(this._prefs.get("pocketCta"), false);
 
@@ -128,7 +128,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   sendSpocUpdate(data) {
-    const action = {type: at.POCKET_UPDATE_SPOCS, data: data};
+    const action = {type: at.POCKET_UPDATE_SPOCS, data};
     this.store.dispatch(ac.BroadcastToContent(action));
   }
 

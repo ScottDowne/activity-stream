@@ -40,7 +40,7 @@ function debounce(func, wait) {
 
 export class _Base extends React.PureComponent {
   componentWillMount() {
-    const {App, locale} = this.props;
+    const {locale} = this.props;
     addLocaleDataForReactIntl(locale);
     if (this.props.isFirstrun) {
       global.document.body.classList.add("welcome", "hide-main");

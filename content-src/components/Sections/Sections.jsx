@@ -126,7 +126,7 @@ export class Section extends React.PureComponent {
   maybeAddSpoc() {
     const sectionsSpocs = this.props.spocs || {};
     const shouldShowSpoc = !!this.state.shouldShowSpoc;
-    const spocsPerNewTabs = sectionsSpocs.spocsPerNewTabs;
+    const {spocsPerNewTabs} = sectionsSpocs;
     const show_spocs = !!sectionsSpocs.show_spocs;
     const result = show_spocs && !!spocsPerNewTabs && (Math.random() <= spocsPerNewTabs);
     if (result !== shouldShowSpoc) {
