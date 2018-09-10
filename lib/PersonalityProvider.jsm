@@ -3,13 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const {UserDomainAffinityProvider} = ChromeUtils.import("resource://activity-stream/lib/UserDomainAffinityProvider.jsm", {});
 const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm", {});
 const {RemoteSettings} = ChromeUtils.import("resource://services-settings/remote-settings.js", {});
 
 const {NaiveBayesTextTagger} = ChromeUtils.import("resource://activity-stream/lib/NaiveBayesTextTagger.jsm", {});
 const {NmfTextTagger} = ChromeUtils.import("resource://activity-stream/lib/NmfTextTagger.jsm", {});
-const {TfIdfVectorizer} = ChromeUtils.import("resource://activity-stream/lib/TfIdfVectorizer.jsm", {});
 const {RecipeExecutor} = ChromeUtils.import("resource://activity-stream/lib/RecipeExecutor.jsm", {});
 
 ChromeUtils.defineModuleGetter(this, "NewTabUtils",
@@ -20,70 +18,76 @@ ChromeUtils.defineModuleGetter(this, "NewTabUtils",
  * This allows Firefox to classify pages into topics, by examining the text found on the page.
  * It does this by looking at the history text content, title, and description.
  */
-this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityProvider {
-  // This is just a stub for now, extending UserDomainAffinityProvider until we flesh it out.
-  constructor(...args) {
-    super(...args);
+this.PersonalityProvider = class PersonalityProvider {
+  constructor(
+    timeSegments,
+    parameterSets,
+    maxHistoryQueryResults,
+    version,
+    scores,
+    modelKeys = []) {
+    this.modelKeys = modelKeys;
+    this.timeSegments = timeSegments;
+    this.maxHistoryQueryResults = maxHistoryQueryResults;
+    this.version = version;
     this.interestVectorStore = new PersistentCache("interest-vector", true);
+    this.init();
   }
 
-  /**
-   * Returns the nb or nmf collection from Remote Settings.
-   */
-  getModel(modelType, tag) {
-    if (modelType !== "nb" && modelType !== "nmf") {
-      throw new Error(`Personality provider received unexpected model for get model: ${modelType}`);
-    }
-
-    // Do we need to clear this at some point in case we have updates?
-    if (!this[`_${modelType}Model${tag}`]) {
-      this[`_${modelType}Model${tag}`] = this.getRemoteSettings(`${modelType}-model-${tag}`);
-    }
-    return this[`_${modelType}Model${tag}`];
+  async init() {
+    // TODO: Probably need to use and check cache for these better.
+    // Either these functions know to check for cache and use it,
+    // or we can pass it from the feed through this constructor.
+    this.interestConfig = await this.getRecipe();
+    this.recipeExecutor = this.generateRecipeExecutor();
+    this.interestVector = await this.createInterestVector();
+    this.initialized = true;
   }
 
   getRemoteSettings(name) {
-    return RemoteSettings(name);
+    return RemoteSettings(name).get();
+  }
+
+  getRecipeExecutor(nbTaggers, nmfTaggers) {
+    return new RecipeExecutor(nbTaggers, nmfTaggers);
+  }
+
+  getNaiveBayesTextTagger(model) {
+    return new NaiveBayesTextTagger(model);
+  }
+
+  getNmfTextTagger(model) {
+    return new NmfTextTagger(model);
   }
 
   /**
    * Returns a Recipe from remote settings to be consumed by a RecipeExecutor.
    * A Recipe is a set of instructions on how to processes a RecipeExecutor.
    */
-  getRecipe() {
+  async getRecipe() {
     if (!this.recipe) {
-      this.recipe = this.getRemoteSettings("personality-provider-recipe");
+      this.recipe = await this.getRemoteSettings("personality-provider-recipe");
     }
-    return this.recipe;
+    return this.recipe[0];
   }
 
   /**
-   * Returns a Text Tagger from a model type, either nb or nmf.
-   * A text tagger allows us to classify text, title or description
-   * of pages found in the browser history.
-   */
-  generateTagger(modelType, tag) {
-    if (modelType !== "nb" && modelType !== "nmf") {
-      throw new Error(`Personality provider received unexpected model for generate tagger: ${modelType}`);
-    }
-
-    let textTagger;
-
-    if (modelType === "nb") {
-      textTagger = new NaiveBayesTextTagger(this.getModel("nb", tag), new TfIdfVectorizer());
-    } else if (modelType === "nmf") {
-      textTagger = new NmfTextTagger(this.getModel("nmf", tag), new TfIdfVectorizer());
-    }
-    return textTagger;
-  }
-
-  /**
-   * Returns a Recipe Executor from a model type, either nb or nmf.
+   * Returns a Recipe Executor.
    * A Recipe Executor is a set of actions that can be consumed by a Recipe.
    * The Recipe determines the order and specifics of which the actions are called.
    */
-  generateRecipeExecutor(tag) {
-    return RecipeExecutor(this.generateTagger("nb", tag), this.generateTagger("nmf", tag));
+  generateRecipeExecutor() {
+    let nbTaggers = [];
+    let nmfTaggers = {};
+    for (let key of this.modelKeys) {
+      let model = this.getRemoteSettings(key);
+      if (model.model_type === "nb") {
+        nbTaggers.push(this.getNaiveBayesTextTagger(model));
+      } else if (model.model_type === "nmf") {
+        nmfTaggers[model.parent_tag] = this.getNmfTextTagger(model);
+      }
+    }
+    return this.getRecipeExecutor(nbTaggers, nmfTaggers);
   }
 
   /**
@@ -92,10 +96,10 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
   async fetchHistory(columns, beginTimeSecs, endTimeSecs) {
     let sql = `SELECT *
     FROM moz_places
-    WHERE last_visit_data >= ${beginTimeSecs * 1000000}
-    AND last_visit_data < ${endTimeSecs * 1000000}`;
-    columns.forEach(column => {
-      sql += ` AND ${column} <> ""`;
+    WHERE last_visit_date >= ${beginTimeSecs * 1000000}
+    AND last_visit_date < ${endTimeSecs * 1000000}`;
+    columns.forEach(requiredColumn => {
+      sql += ` AND ${requiredColumn} <> ""`;
     });
 
     const history = await NewTabUtils.activityStreamProvider.executePlacesQuery(sql, {
@@ -114,7 +118,8 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
     let interestVector = {};
     let endTimeSecs = ((new Date()).getTime() / 1000);
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
-    const history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
+    let history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
+
     for (let historyRec of history) {
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
       if (ivItem === null) {
@@ -138,6 +143,10 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
    * is populated.
    */
   calculateItemRelevanceScore(pocketItem) {
+    // TODO: Not ready yet, we need to deal with this...
+    if (!this.initialized) {
+      return -1;
+    }
     let scorableItem = this.recipeExecutor.executeRecipe(pocketItem, this.interestConfig.item_to_rank_builder);
     if (scorableItem === null) {
       return -1;
@@ -151,6 +160,19 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
       return -1;
     }
     return rankingVector.score;
+  }
+
+  /**
+   * Returns an object holding the settings and affinity scores of this provider instance.
+   */
+  getAffinities() {
+    return {
+      timeSegments: this.timeSegments,
+      parameterSets: this.parameterSets,
+      maxHistoryQueryResults: this.maxHistoryQueryResults,
+      version: this.version,
+      scores: this.scores
+    };
   }
 };
 
