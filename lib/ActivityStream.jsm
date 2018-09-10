@@ -89,7 +89,7 @@ const PREFS_CONFIG = new Map([
   ["affinityProviderV2", {
     title: "Switch how we generate spocs and recs to version 2.",
     value: JSON.stringify({
-      use_v2: false,
+      use_v2: true,
       model_keys: ["nbSports", "nmfSports"]
     })
   }],

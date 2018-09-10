@@ -19,8 +19,7 @@ ChromeUtils.defineModuleGetter(this, "NewTabUtils",
  * This allows Firefox to classify pages into topics, by examining the text found on the page.
  * It does this by looking at the history text content, title, and description.
  */
-this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityProvider {
-  // This is just a stub for now, extending UserDomainAffinityProvider until we flesh it out.
+this.PersonalityProvider = class PersonalityProvider {
   constructor(
     timeSegments,
     parameterSets,
@@ -28,14 +27,17 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
     version,
     scores,
     modelKeys = []) {
-    super(
-      timeSegments,
-      parameterSets,
-      maxHistoryQueryResults,
-      version,
-      scores);
     this.modelKeys = modelKeys;
+    this.timeSegments = timeSegments;
+    this.maxHistoryQueryResults = maxHistoryQueryResults;
+    this.version = version;
     this.interestVectorStore = new PersistentCache("interest-vector", true);
+    // TODO: Probably need to use and check cache for these better.
+    // Either these functions know to check for cache and use it,
+    // or we can pass it from the feed through this constructor.
+    this.interestConfig = this.getRecipe();
+    this.recipeExecutor = this.generateRecipeExecutor();
+    this.interestVector = this.createInterestVector();
   }
 
   getRemoteSettings(name) {
@@ -149,6 +151,19 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
       return -1;
     }
     return rankingVector.score;
+  }
+
+  /**
+   * Returns an object holding the settings and affinity scores of this provider instance.
+   */
+  getAffinities() {
+    return {
+      timeSegments: this.timeSegments,
+      parameterSets: this.parameterSets,
+      maxHistoryQueryResults: this.maxHistoryQueryResults,
+      version: this.version,
+      scores: this.scores
+    };
   }
 };
 
