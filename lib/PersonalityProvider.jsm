@@ -39,12 +39,13 @@ this.PersonalityProvider = class PersonalityProvider {
     // Either these functions know to check for cache and use it,
     // or we can pass it from the feed through this constructor.
     this.interestConfig = await this.getRecipe();
+    console.log(this.interestConfig);
     this.recipeExecutor = this.generateRecipeExecutor();
     this.interestVector = await this.createInterestVector();
     this.initialized = true;
   }
 
-  async getRemoteSettings(name) {
+  getRemoteSettings(name) {
     return RemoteSettings(name).get();
   }
 
