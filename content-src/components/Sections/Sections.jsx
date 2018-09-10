@@ -84,16 +84,24 @@ export class Section extends React.PureComponent {
   }
 
   componentDidMount() {
+    this.maybeAddSpoc();
     if (this.props.rows.length && !this.props.pref.collapsed) {
       this.sendImpressionStatsOrAddListener();
     }
-    this.maybeAddSpoc();
   }
 
   componentDidUpdate(prevProps) {
     const {props} = this;
     const isCollapsed = props.pref.collapsed;
     const wasCollapsed = prevProps.pref.collapsed;
+    const sectionsSpocs = this.props.spocs || {};
+    const prevSectionsSpocs = prevProps.spocs || {};
+
+    if (sectionsSpocs.spocsPerNewTabs !== prevSectionsSpocs.spocsPerNewTabs ||
+      sectionsSpocs.show_spocs !== prevSectionsSpocs.show_spocs) {
+      this.maybeAddSpoc();
+    }
+
     if (
       // Don't send impression stats for the empty state
       props.rows.length &&
@@ -106,12 +114,6 @@ export class Section extends React.PureComponent {
       )
     ) {
       this.sendImpressionStatsOrAddListener();
-    }
-    const sectionsSpocs = this.props.spocs || {};
-    const prevSectionsSpocs = prevProps.spocs || {};
-    if (sectionsSpocs.spocsPerNewTabs !== prevSectionsSpocs.spocsPerNewTabs ||
-      sectionsSpocs.show_spocs !== prevSectionsSpocs.show_spocs) {
-      this.maybeAddSpoc();
     }
   }
 
