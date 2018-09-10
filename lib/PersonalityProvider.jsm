@@ -31,16 +31,21 @@ this.PersonalityProvider = class PersonalityProvider {
     this.maxHistoryQueryResults = maxHistoryQueryResults;
     this.version = version;
     this.interestVectorStore = new PersistentCache("interest-vector", true);
+    this.init();
+  }
+
+  async init() {
     // TODO: Probably need to use and check cache for these better.
     // Either these functions know to check for cache and use it,
     // or we can pass it from the feed through this constructor.
-    this.interestConfig = this.getRecipe();
+    this.interestConfig = await this.getRecipe();
     this.recipeExecutor = this.generateRecipeExecutor();
     this.interestVector = this.createInterestVector();
+    this.initialized = true;
   }
 
-  getRemoteSettings(name) {
-    return RemoteSettings(name);
+  async getRemoteSettings(name) {
+    return RemoteSettings(name).get();
   }
 
   getRecipeExecutor(nbTaggers, nmfTaggers) {
@@ -59,11 +64,11 @@ this.PersonalityProvider = class PersonalityProvider {
    * Returns a Recipe from remote settings to be consumed by a RecipeExecutor.
    * A Recipe is a set of instructions on how to processes a RecipeExecutor.
    */
-  getRecipe() {
+  async getRecipe() {
     if (!this.recipe) {
-      this.recipe = this.getRemoteSettings("personality-provider-recipe");
+      this.recipe = await this.getRemoteSettings("personality-provider-recipe");
     }
-    return this.recipe;
+    return this.recipe[0];
   }
 
   /**
@@ -114,6 +119,9 @@ this.PersonalityProvider = class PersonalityProvider {
     let endTimeSecs = ((new Date()).getTime() / 1000);
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
     let history = this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
+
+    console.log(history, "history");
+
     for (let historyRec of history) {
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
       if (ivItem === null) {
@@ -137,6 +145,10 @@ this.PersonalityProvider = class PersonalityProvider {
    * is populated.
    */
   calculateItemRelevanceScore(pocketItem) {
+    // TODO: Not ready yet, we need to deal with this...
+    if (!this.initialized) {
+      return -1;
+    }
     let scorableItem = this.recipeExecutor.executeRecipe(pocketItem, this.interestConfig.item_to_rank_builder);
     if (scorableItem === null) {
       return -1;
