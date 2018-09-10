@@ -36,7 +36,7 @@ describe("Personality Provider", () => {
   let NaiveBayesTextTaggerStub;
   let NmfTextTaggerStub;
   let RecipeExecutorStub;
-  let mockHistory;
+  // let mockHistory;
 
   beforeEach(() => {
     globals = new GlobalOverrider();
@@ -60,6 +60,7 @@ describe("Personality Provider", () => {
 
     instance = new PersonalityProvider(TIME_SEGMENTS, PARAMETER_SETS);
 
+    /*
     mockHistory = [
       {
         title: "automotive",
@@ -80,8 +81,9 @@ describe("Personality Provider", () => {
         frecency: 1
       }
     ];
+    */
 
-    //NewTabUtils.activityStreamProvider.executePlacesQuery = (a, b) => mockHistory;
+    // NewTabUtils.activityStreamProvider.executePlacesQuery = (a, b) => mockHistory;
 
     instance.interestConfig = {
       history_item_builder: "history_item_builder",
@@ -217,6 +219,7 @@ describe("Personality Provider", () => {
       assert.equal(secondCallArgs[1], "sports");
     });
   });
+
   /*
   describe("#createInterestVector", () => {
     it("should gracefully handle history entries that fail", () => {
