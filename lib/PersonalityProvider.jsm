@@ -94,8 +94,8 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
     FROM moz_places
     WHERE last_visit_data >= ${beginTimeSecs * 1000000}
     AND last_visit_data < ${endTimeSecs * 1000000}`;
-    columns.forEach(requiredColumn => {
-      sql += ` AND ${requiredColumn} <> ""`;
+    columns.forEach(column => {
+      sql += ` AND ${column} <> ""`;
     });
 
     const history = await NewTabUtils.activityStreamProvider.executePlacesQuery(sql, {
@@ -110,11 +110,11 @@ this.PersonalityProvider = class PersonalityProvider extends UserDomainAffinityP
    * Examines the user's browse history and returns an interest vector that
    * describes the topics the user frequently browses.
    */
-  createInterestVector() {
+  async createInterestVector() {
     let interestVector = {};
     let endTimeSecs = ((new Date()).getTime() / 1000);
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
-    let history = this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
+    const history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
     for (let historyRec of history) {
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
       if (ivItem === null) {

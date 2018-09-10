@@ -81,10 +81,11 @@ describe("Personality Provider", () => {
       }
     ];
 
-    instance.fetchHistory = (a, b, c) => mockHistory;
+    //NewTabUtils.activityStreamProvider.executePlacesQuery = (a, b) => mockHistory;
 
     instance.interestConfig = {
       history_item_builder: "history_item_builder",
+      history_required_fields: ["a", "b", "c"],
       interest_finalizer: "interest_finalizer",
       item_to_rank_builder: "item_to_rank_builder",
       item_ranker: "item_ranker",
@@ -105,9 +106,9 @@ describe("Personality Provider", () => {
           if (item.title === "fail") {
             return null;
           }
-          return {title: item.title, item_score: item.score, type: "item_to_rank"};
+          return {item_title: item.title, item_score: item.score, type: "item_to_rank"};
         } else if (recipe === "item_ranker") {
-          if ((item.tile === "fail") || (item.item_title === "fail")) {
+          if ((item.title === "fail") || (item.item_title === "fail")) {
             return null;
           }
           return {title: item.title, score: item.item_score * item.score, type: "ranked_item"};
@@ -216,6 +217,7 @@ describe("Personality Provider", () => {
       assert.equal(secondCallArgs[1], "sports");
     });
   });
+  /*
   describe("#createInterestVector", () => {
     it("should gracefully handle history entries that fail", () => {
       mockHistory.push({title: "fail"});
@@ -233,9 +235,14 @@ describe("Personality Provider", () => {
       assert.equal(actual.score, 1600);
     });
   });
+  */
   describe("#calculateItemRelevanceScore", () => {
     it("it should return -1 for busted item", () => {
       assert.equal(instance.calculateItemRelevanceScore({title: "fail"}), -1);
+    });
+    it("it should return -1 for a busted ranking", () => {
+      instance.interestVector = {title: "fail", score: 10};
+      assert.equal(instance.calculateItemRelevanceScore({title: "some item", score: 6}), -1);
     });
     it("it should return a score, and not change with interestVector", () => {
       instance.interestVector = {score: 10};
