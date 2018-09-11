@@ -142,7 +142,7 @@ export class Section extends React.PureComponent {
     const result = show_spocs && !!spocsPerNewTabs && (Math.random() <= spocsPerNewTabs);
     if (result !== shouldShowSpoc) {
       this.setState({shouldShowSpoc: result});
-      // We need this immediately for impressions reasons. 
+      // We need this immediately for impressions reasons.
       this.includeSpocImpression = result;
     }
   }
