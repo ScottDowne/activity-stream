@@ -67,7 +67,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
         await this.fetchTopics();
       }
       this.doContentUpdate(true);
-      this.doSpocUpdate();
+      this.doSpocUpdate(true);
       Services.obs.addObserver(this, "idle-daily");
     } catch (e) {
       Cu.reportError(`Problem initializing top stories feed: ${e.message}`);
@@ -107,13 +107,13 @@ this.TopStoriesFeed = class TopStoriesFeed {
     this.store.dispatch(shouldBroadcast ? ac.BroadcastToContent(action) : ac.AlsoToPreloaded(action));
   }
 
-  doSpocUpdate() {
+  doSpocUpdate(shouldBroadcast = false) {
     if (!this.shouldShowSpocs()) {
-      return this.sendSpocUpdate({spoc: null});
+      return this.sendSpocUpdate({spoc: null}, shouldBroadcast);
     }
     if (!this.spocs || !this.spocs.length) {
       // We have stories but no spocs so there's nothing to do
-      return this.sendSpocUpdate({spoc: null});
+      return this.sendSpocUpdate({spoc: null}, shouldBroadcast);
     }
 
     // Filter spocs based on frequency caps
@@ -122,14 +122,14 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
     if (!spocs.length) {
       // There's currently no spoc left to display
-      return this.sendSpocUpdate({spoc: null});
+      return this.sendSpocUpdate({spoc: null}, shouldBroadcast);
     }
-    return this.sendSpocUpdate({spoc: spocs[0]});
+    return this.sendSpocUpdate({spoc: spocs[0]}, shouldBroadcast);
   }
 
-  sendSpocUpdate(data) {
+  sendSpocUpdate(data, shouldBroadcast) {
     const action = {type: at.POCKET_UPDATE_SPOCS, data};
-    this.store.dispatch(ac.BroadcastToContent(action));
+    this.store.dispatch(shouldBroadcast ? ac.BroadcastToContent(action) : ac.AlsoToPreloaded(action));
   }
 
   doContentUpdate(shouldBroadcast) {
@@ -166,8 +166,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
         this.spocCampaignMap = new Map(body.spocs.map(s => [s.id, `${s.campaign_id}`]));
         this.spocs = this.transform(body.spocs).filter(s => s.score >= s.min_score);
         this.cleanUpCampaignImpressionPref();
-        // Spocs won't exist without stories, so no need to worry about last updated.
-        this.cache.set("spocs", this.spocs);
       }
       this.storiesLastUpdated = Date.now();
       body._timestamp = this.storiesLastUpdated;
@@ -181,7 +179,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
     const data = await this.cache.get();
     let stories = data.stories && data.stories.recommendations;
     let topics = data.topics && data.topics.topics;
-    let {spocs} = data;
 
     let affinities = data.domainAffinities;
     if (this.personalized && affinities && affinities.scores) {
@@ -193,8 +190,10 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.updateSettings(data.stories.settings);
       this.stories = this.rotate(this.transform(stories));
       this.storiesLastUpdated = data.stories._timestamp;
-      if (spocs && spocs.length) {
-        this.spocs = spocs;
+      if (data.stories.spocs && data.stories.spocs.length) {
+        this.spocCampaignMap = new Map(data.stories.spocs.map(s => [s.id, `${s.campaign_id}`]));
+        this.spocs = this.transform(data.stories.spocs).filter(s => s.score >= s.min_score);
+        this.cleanUpCampaignImpressionPref();
       }
     }
     if (topics && topics.length > 0 && this.topicsLastUpdated === 0) {
@@ -516,13 +515,20 @@ this.TopStoriesFeed = class TopStoriesFeed {
       case at.TELEMETRY_IMPRESSION_STATS: {
         const payload = action.data;
         const viewImpression = !("click" in payload || "block" in payload || "pocket" in payload);
+        let campaignImpressionFound = false;
         if (payload.tiles && viewImpression) {
           if (this.shouldShowSpocs()) {
             payload.tiles.forEach(t => {
               if (this.spocCampaignMap.has(t.id)) {
+                campaignImpressionFound = true;
                 this.recordCampaignImpression(this.spocCampaignMap.get(t.id));
               }
             });
+            // In the case of a spoc being seen,
+            // we may need to update/remove/cycle any spocs.
+            if (campaignImpressionFound) {
+              this.doSpocUpdate(false);
+            }
           }
           if (this.personalized) {
             const topRecs = payload.tiles

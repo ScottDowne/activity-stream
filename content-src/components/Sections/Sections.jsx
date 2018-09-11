@@ -31,20 +31,27 @@ export class Section extends React.PureComponent {
   }
 
   _dispatchImpressionStats() {
-    const {props} = this;
+    const {compactCards, rows, dispatch, eventSource, Pocket, id} = this.props;
+    const spoc = Pocket.spocs && Pocket.spocs.spoc;
+    const waitingForSpoc = id === "topstories" && !Pocket.spocs;
     let cardsPerRow = CARDS_PER_ROW_DEFAULT;
-    if (props.compactCards && global.matchMedia(`(min-width: 1072px)`).matches) {
+    if (compactCards && global.matchMedia(`(min-width: 1072px)`).matches) {
       // If the section has compact cards and the viewport is wide enough, we show
       // 4 columns instead of 3.
       // $break-point-widest = 1072px (from _variables.scss)
       cardsPerRow = CARDS_PER_ROW_COMPACT_WIDE;
     }
     const maxCards = cardsPerRow * this.numRows;
-    const cards = props.rows.slice(0, maxCards);
+
+    if (!waitingForSpoc && maxCards > 2 && this.includeSpocImpression && spoc) {
+      rows.splice(2, 0, spoc);
+    }
+
+    const cards = rows.slice(0, maxCards);
 
     if (this.needsImpressionStats(cards)) {
-      props.dispatch(ac.ImpressionStats({
-        source: props.eventSource,
+      dispatch(ac.ImpressionStats({
+        source: eventSource,
         tiles: cards.map(link => ({id: link.guid}))
       }));
       this.impressionCardGuids = cards.map(link => link.guid);
@@ -85,17 +92,20 @@ export class Section extends React.PureComponent {
 
   componentDidMount() {
     this.maybeAddSpoc();
-    if (this.props.rows.length && !this.props.pref.collapsed) {
+    const {id, Pocket, rows, pref} = this.props;
+    const waitingForSpoc = id === "topstories" && !Pocket.spocs;
+    if (rows.length && !pref.collapsed && !waitingForSpoc) {
       this.sendImpressionStatsOrAddListener();
     }
   }
 
   componentDidUpdate(prevProps) {
-    const {props} = this;
-    const isCollapsed = props.pref.collapsed;
+    const {id, Pocket, pref, spocs, rows} = this.props;
+    const isCollapsed = pref.collapsed;
     const wasCollapsed = prevProps.pref.collapsed;
-    const sectionsSpocs = this.props.spocs || {};
+    const sectionsSpocs = spocs || {};
     const prevSectionsSpocs = prevProps.spocs || {};
+    const waitingForSpoc = id === "topstories" && !Pocket.spocs;
 
     if (sectionsSpocs.spocsPerNewTabs !== prevSectionsSpocs.spocsPerNewTabs ||
       sectionsSpocs.show_spocs !== prevSectionsSpocs.show_spocs) {
@@ -104,11 +114,12 @@ export class Section extends React.PureComponent {
 
     if (
       // Don't send impression stats for the empty state
-      props.rows.length &&
+      rows.length && !waitingForSpoc &&
       (
         // We only want to send impression stats if the content of the cards has changed
         // and the section is not collapsed...
-        (props.rows !== prevProps.rows && !isCollapsed) ||
+        (rows !== prevProps.rows && !isCollapsed) ||
+        (Pocket.spocs !== prevProps.Pocket.spocs && !isCollapsed) ||
         // or if we are expanding a section that was collapsed.
         (wasCollapsed && !isCollapsed)
       )
@@ -131,6 +142,8 @@ export class Section extends React.PureComponent {
     const result = show_spocs && !!spocsPerNewTabs && (Math.random() <= spocsPerNewTabs);
     if (result !== shouldShowSpoc) {
       this.setState({shouldShowSpoc: result});
+      // We need this immediately for impressions reasons. 
+      this.includeSpocImpression = result;
     }
   }
 
