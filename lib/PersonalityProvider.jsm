@@ -13,6 +13,8 @@ const {RecipeExecutor} = ChromeUtils.import("resource://activity-stream/lib/Reci
 ChromeUtils.defineModuleGetter(this, "NewTabUtils",
   "resource://gre/modules/NewTabUtils.jsm");
 
+const STORE_UPDATE_TIME = 24 * 60 * 60 * 1000; // 24 hours
+
 /**
  * V2 provider builds and ranks an interest profile (also called an “interest vector”) off the browse history.
  * This allows Firefox to classify pages into topics, by examining the text found on the page.
@@ -30,17 +32,22 @@ this.PersonalityProvider = class PersonalityProvider {
     this.timeSegments = timeSegments;
     this.maxHistoryQueryResults = maxHistoryQueryResults;
     this.version = version;
-    this.interestVectorStore = new PersistentCache("interest-vector", true);
     this.init();
   }
 
   async init() {
-    // TODO: Probably need to use and check cache for these better.
-    // Either these functions know to check for cache and use it,
-    // or we can pass it from the feed through this constructor.
+    this.store = new PersistentCache("personality-provider", true);
     this.interestConfig = await this.getRecipe();
     this.recipeExecutor = this.generateRecipeExecutor();
-    this.interestVector = await this.createInterestVector();
+    this.interestVector = await this.store.get("interest-vector");
+
+    // Fetch a new one if none exists or every set update time.
+    if (!this.interestVector ||
+      (Date.now() - this.interestVector.lastUpdate) >= STORE_UPDATE_TIME) {
+      this.interestVector = await this.createInterestVector();
+      this.interestVector.lastUpdate = Date.now();
+      this.store.set("interest-vector", this.interestVector);
+    }
     this.initialized = true;
   }
 
