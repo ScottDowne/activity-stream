@@ -80,12 +80,17 @@ this.PersonalityProvider = class PersonalityProvider {
   generateRecipeExecutor() {
     let nbTaggers = [];
     let nmfTaggers = {};
-    for (let key of this.modelKeys) {
-      let model = this.getRemoteSettings(key);
-      if (model.model_type === "nb") {
-        nbTaggers.push(this.getNaiveBayesTextTagger(model));
-      } else if (model.model_type === "nmf") {
-        nmfTaggers[model.parent_tag] = this.getNmfTextTagger(model);
+    let models = this.getRemoteSettings("personality_provider_models");
+
+    for (let model of models) {
+      if (!modelKeys.contains(model.name)) {
+        continue;
+      }
+      let modelData = model.data;
+      if (modelData.model_type === "nb") {
+        nbTaggers.push(this.getNaiveBayesTextTagger(modelData));
+      } else if (modelData.model_type === "nmf") {
+        nmfTaggers[modelData.parent_tag] = this.getNmfTextTagger(modelData);
       }
     }
     return this.getRecipeExecutor(nbTaggers, nmfTaggers);
