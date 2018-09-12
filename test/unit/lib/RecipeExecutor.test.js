@@ -708,6 +708,10 @@ describe("RecipeExecutor", () => {
       item = instance.setDefault(item, {field: "lhs", value: 1111});
       assert.equal(item.lhs, 2);
     });
+    it("should store a complex value", () => {
+      item = instance.setDefault(item, {field: "missing", value: {a: 1}});
+      assert.deepEqual(item.missing, {a: 1});
+    });
   });
 
   describe("#lookupValue", () => {

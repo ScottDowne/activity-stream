@@ -136,14 +136,12 @@ this.RecipeExecutor = class RecipeExecutor {
   conditionallyNmfTag(item, config) {
     let allNmfTags = {};
     let parentTags = {};
-    let parent_probs = {};
 
     if (!("nb_tags" in item) || !("nb_tokens" in item)) {
       return null;
     }
 
     Object.keys(item.nb_tags).forEach(parentTag => {
-      let parent_prob = item.nb_tags[parentTag];
       let nmfTagger = this.nmfTaggers[parentTag];
       if (nmfTagger !== undefined) {
         let nmfTags = nmfTagger.tagTokens(item.nb_tokens);
@@ -731,7 +729,7 @@ this.RecipeExecutor = class RecipeExecutor {
    *  value             value to store in that field
    */
   setDefault(item, config) {
-    let val = this._lookupScalar(item, config.value, 0);
+    let val = this._lookupScalar(item, config.value, config.value);
     if (!(config.field in item)) {
       item[config.field] = val;
     }

@@ -68,6 +68,7 @@ this.PersonalityProvider = class PersonalityProvider {
     if (!this.recipe) {
       this.recipe = await this.getRemoteSettings("personality-provider-recipe");
     }
+    console.log("this.recipe", this.recipe);
     return this.recipe[0];
   }
 
@@ -115,10 +116,10 @@ this.PersonalityProvider = class PersonalityProvider {
    * describes the topics the user frequently browses.
    */
   async createInterestVector() {
+    console.log("createInterestVector");
     let interestVector = {};
     let endTimeSecs = ((new Date()).getTime() / 1000);
-    let windowSizeSecs = endTimeSecs;
-    console.log("..... interestConfig", this.interestConfig)
+    console.log("..... interestConfig", this.interestConfig);
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
     let history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
 
@@ -152,10 +153,6 @@ this.PersonalityProvider = class PersonalityProvider {
    * is populated.
    */
   calculateItemRelevanceScore(pocketItem) {
-    // TODO: Not ready yet, we need to deal with this...
-    if (!this.initialized) {
-      return -1;
-    }
     let scorableItem = this.recipeExecutor.executeRecipe(pocketItem, this.interestConfig.item_to_rank_builder);
     if (scorableItem === null) {
       return -1;
@@ -165,6 +162,7 @@ this.PersonalityProvider = class PersonalityProvider {
       rankingVector[key] = scorableItem[key];
     });
     rankingVector = this.recipeExecutor.executeRecipe(rankingVector, this.interestConfig.item_ranker);
+
     if (rankingVector === null) {
       return -1;
     }
