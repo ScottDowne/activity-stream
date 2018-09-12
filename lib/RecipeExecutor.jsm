@@ -39,6 +39,8 @@ this.RecipeExecutor = class RecipeExecutor {
     };
     this.nbTaggers = nbTaggers;
     this.nmfTaggers = nmfTaggers;
+
+    console.log("RecipeExecutor constructed");
   }
 
   /**
@@ -134,12 +136,14 @@ this.RecipeExecutor = class RecipeExecutor {
   conditionallyNmfTag(item, config) {
     let allNmfTags = {};
     let parentTags = {};
+    let parent_probs = {};
 
     if (!("nb_tags" in item) || !("nb_tokens" in item)) {
       return null;
     }
 
     Object.keys(item.nb_tags).forEach(parentTag => {
+      let parent_prob = item.nb_tags[parentTag];
       let nmfTagger = this.nmfTaggers[parentTag];
       if (nmfTagger !== undefined) {
         let nmfTags = nmfTagger.tagTokens(item.nb_tokens);
@@ -152,6 +156,7 @@ this.RecipeExecutor = class RecipeExecutor {
 
     item.nmf_tags = allNmfTags;
     item.nmf_tags_parent = parentTags;
+    item.nmf_tags_parent_weights = JSON.parse(JSON.stringify(item.nb_tags));
 
     return item;
   }
@@ -1006,6 +1011,7 @@ this.RecipeExecutor = class RecipeExecutor {
     if (key in left[config.left_field]) {
       leftValue = left[config.left_field][key];
     }
+
     left[config.left_field][key] = op(leftValue, rightValue);
 
     return left;

@@ -117,13 +117,20 @@ this.PersonalityProvider = class PersonalityProvider {
   async createInterestVector() {
     let interestVector = {};
     let endTimeSecs = ((new Date()).getTime() / 1000);
+    let windowSizeSecs = endTimeSecs;
+    console.log("..... interestConfig", this.interestConfig)
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
     let history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
 
+    let itemId = -1;
     for (let historyRec of history) {
+      itemId++;
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
       if (ivItem === null) {
         continue;
+      }
+      if (Object.keys(ivItem.tags).length > 0) {
+        console.log("***** TAGGED ", itemId, " :: ", ivItem);
       }
       interestVector = this.recipeExecutor.executeCombinerRecipe(
         interestVector,
@@ -134,7 +141,9 @@ this.PersonalityProvider = class PersonalityProvider {
       }
     }
 
-    return this.recipeExecutor.executeRecipe(interestVector, this.interestConfig.interest_finalizer);
+    let xxx =  this.recipeExecutor.executeRecipe(interestVector, this.interestConfig.interest_finalizer);
+    console.log("FINAL IV ", xxx);
+    return xxx;
   }
 
   /**
