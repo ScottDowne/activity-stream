@@ -27,7 +27,8 @@ this.PersonalityProvider = class PersonalityProvider {
     maxHistoryQueryResults,
     version,
     scores,
-    modelKeys = []) {
+    modelKeys) {
+    console.log(modelKeys);
     this.modelKeys = modelKeys;
     this.timeSegments = timeSegments;
     this.maxHistoryQueryResults = maxHistoryQueryResults;
@@ -38,7 +39,7 @@ this.PersonalityProvider = class PersonalityProvider {
   async init() {
     this.store = new PersistentCache("personality-provider", true);
     this.interestConfig = await this.getRecipe();
-    this.recipeExecutor = this.generateRecipeExecutor();
+    this.recipeExecutor = await this.generateRecipeExecutor();
     this.interestVector = await this.store.get("interest-vector");
 
     // Fetch a new one if none exists or every set update time.
@@ -84,17 +85,24 @@ this.PersonalityProvider = class PersonalityProvider {
    * A Recipe Executor is a set of actions that can be consumed by a Recipe.
    * The Recipe determines the order and specifics of which the actions are called.
    */
-  generateRecipeExecutor() {
+  async generateRecipeExecutor() {
     let nbTaggers = [];
     let nmfTaggers = {};
     for (let key of this.modelKeys) {
-      let model = this.getRemoteSettings(key);
+      console.log(key);
+      let model = (await this.getRemoteSettings(key))[0];
+      console.log(model);
+      if (!model) {
+        continue;
+      }
+      console.log(model);
       if (model.model_type === "nb") {
         nbTaggers.push(this.getNaiveBayesTextTagger(model));
       } else if (model.model_type === "nmf") {
         nmfTaggers[model.parent_tag] = this.getNmfTextTagger(model);
       }
     }
+    console.log(nbTaggers, nmfTaggers);
     return this.getRecipeExecutor(nbTaggers, nmfTaggers);
   }
 
