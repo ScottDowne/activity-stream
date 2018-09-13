@@ -59,6 +59,9 @@ this.TopStoriesFeed = class TopStoriesFeed {
       // If we have changed data, cache should be cleared,
       // and last updated should be 0, and we can fetch.
       await this.loadCachedData();
+      if (this.domainAffinitiesLastUpdated === 0) {
+        this.updateDomainAffinityScores();
+      }
       if (this.storiesLastUpdated === 0) {
         await this.fetchStories();
       }
@@ -125,6 +128,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   affinityProividerSwitcher(...args) {
+    console.log("switcher");
     let affinityProviderV2 = this._prefs.get("affinityProviderV2");
     if (affinityProviderV2) {
       try {
