@@ -27,7 +27,7 @@ this.PersonalityProvider = class PersonalityProvider {
     maxHistoryQueryResults,
     version,
     scores,
-    modelKeys = []) {
+    modelKeys) {
     this.modelKeys = modelKeys;
     this.timeSegments = timeSegments;
     this.maxHistoryQueryResults = maxHistoryQueryResults;
@@ -38,7 +38,7 @@ this.PersonalityProvider = class PersonalityProvider {
   async init() {
     this.store = new PersistentCache("personality-provider", true);
     this.interestConfig = await this.getRecipe();
-    this.recipeExecutor = this.generateRecipeExecutor();
+    this.recipeExecutor = await this.generateRecipeExecutor();
     this.interestVector = await this.store.get("interest-vector");
 
     // Fetch a new one if none exists or every set update time.
@@ -84,17 +84,24 @@ this.PersonalityProvider = class PersonalityProvider {
    * A Recipe Executor is a set of actions that can be consumed by a Recipe.
    * The Recipe determines the order and specifics of which the actions are called.
    */
-  generateRecipeExecutor() {
+  async generateRecipeExecutor() {
     let nbTaggers = [];
     let nmfTaggers = {};
-    for (let key of this.modelKeys) {
-      let model = this.getRemoteSettings(key);
-      if (model.model_type === "nb") {
-        nbTaggers.push(this.getNaiveBayesTextTagger(model));
-      } else if (model.model_type === "nmf") {
-        nmfTaggers[model.parent_tag] = this.getNmfTextTagger(model);
+    const models = await this.getRemoteSettings("personality-provider-models");
+
+    for (let model of models) {
+      if (!model || !this.modelKeys.includes(model.key)) {
+        continue;
+      }
+
+      if (model.data.model_type === "nb") {
+        nbTaggers.push(this.getNaiveBayesTextTagger(model.data));
+      } else if (model.data.model_type === "nmf") {
+        nmfTaggers[model.data.parent_tag] = this.getNmfTextTagger(model.data);
       }
     }
+    console.log(nbTaggers, nmfTaggers);
+    console.log("===============");
     return this.getRecipeExecutor(nbTaggers, nmfTaggers);
   }
 

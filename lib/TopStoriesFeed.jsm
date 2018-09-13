@@ -290,7 +290,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.timeSegments,
       this.domainAffinityParameterSets,
       this.maxHistoryQueryResults,
-      this.version);
+      this.version, undefined);
 
     this.store.dispatch(ac.PerfEvent({
       event: "topstories.domain.affinity.calculation.ms",
