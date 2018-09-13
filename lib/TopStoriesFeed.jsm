@@ -134,6 +134,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       try {
         this.affinityProviderV2 = JSON.parse(affinityProviderV2);
         if (this.affinityProviderV2 && this.affinityProviderV2.use_v2) {
+          console.log("v2 keys", this.affinityProviderV2.model_keys);
           return this.PersonalityProvider(...args, this.affinityProviderV2.model_keys);
         }
       } catch (e) {
@@ -144,6 +145,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   PersonalityProvider(...args) {
+    console.log(...args);
     return new PersonalityProvider(...args);
   }
 
@@ -290,7 +292,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.timeSegments,
       this.domainAffinityParameterSets,
       this.maxHistoryQueryResults,
-      this.version);
+      this.version, undefined);
 
     this.store.dispatch(ac.PerfEvent({
       event: "topstories.domain.affinity.calculation.ms",
