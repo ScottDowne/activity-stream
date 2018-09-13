@@ -58,15 +58,15 @@ this.TopStoriesFeed = class TopStoriesFeed {
       // Cache is used for new page loads, which shouldn't have changed data.
       // If we have changed data, cache should be cleared,
       // and last updated should be 0, and we can fetch.
-      await this.loadCachedData();
-      if (this.domainAffinitiesLastUpdated === 0) {
-        this.updateDomainAffinityScores();
-      }
+      //await this.loadCachedData();
       if (this.storiesLastUpdated === 0) {
         await this.fetchStories();
       }
       if (this.topicsLastUpdated === 0) {
         await this.fetchTopics();
+      }
+      if (this.domainAffinitiesLastUpdated === 0) {
+        this.updateDomainAffinityScores();
       }
       this.doContentUpdate(true);
       this.storiesLoaded = true;
@@ -279,6 +279,8 @@ this.TopStoriesFeed = class TopStoriesFeed {
   }
 
   updateDomainAffinityScores() {
+    console.log("affinity scores", !this.personalized, !this.domainAffinityParameterSets,
+      Date.now() - this.domainAffinitiesLastUpdated < MIN_DOMAIN_AFFINITIES_UPDATE_TIME);
     if (!this.personalized || !this.domainAffinityParameterSets ||
       Date.now() - this.domainAffinitiesLastUpdated < MIN_DOMAIN_AFFINITIES_UPDATE_TIME) {
       return;
@@ -286,6 +288,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
     const start = perfService.absNow();
 
+    console.log("affinity scores switcher calling");
     this.affinityProvider = this.affinityProividerSwitcher(
       this.timeSegments,
       this.domainAffinityParameterSets,
