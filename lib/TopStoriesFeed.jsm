@@ -56,6 +56,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.domainAffinitiesLastUpdated = 0;
       this.processAffinityProividerVersion(options);
       this.dispatchPocketCta(this._prefs.get("pocketCta"), false);
+      Services.obs.addObserver(this, "idle-daily");
 
       // Cache is used for new page loads, which shouldn't have changed data.
       // If we have changed data, cache should be cleared,
@@ -72,8 +73,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
       // This is filtered so an update function can return true to retry on the next run
       this.contentUpdateQueue = this.contentUpdateQueue.filter(update => update());
-
-      Services.obs.addObserver(this, "idle-daily");
     } catch (e) {
       Cu.reportError(`Problem initializing top stories feed: ${e.message}`);
     }
@@ -99,8 +98,13 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
   uninit() {
     this.storiesLoaded = false;
+    console.log(0);
     Services.obs.removeObserver(this, "idle-daily");
     SectionsManager.disableSection(SECTION_ID);
+  }
+
+  onUninit() {
+    SectionsManager.onceInitialized(this.onUninit.bind(this));
   }
 
   getPocketState(target) {
@@ -129,7 +133,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   async affinityProividerSwitcher(...args) {
     console.log("switcher");
     const {affinityProviderV2} = this;
-    if (affinityProviderV2.use_v2 !== null) {
+    if (affinityProviderV2 && affinityProviderV2.use_v2 !== null) {
       console.log('affinityProviderV2 not null and useV2 is', affinityProviderV2.use_v2);
     } else {
       console.log('affinityProviderV2 is null')
@@ -530,6 +534,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
     // they are disabled. The longer term fix should probably be to remove them
     // in the Reducer.
     await this.clearCache();
+    console.log(1);
     this.uninit();
     this.init();
   }
@@ -567,6 +572,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
         this.doContentUpdate(false);
         break;
       case at.UNINIT:
+        console.log(4);
         this.uninit();
         break;
       case at.NEW_TAB_REHYDRATED:
@@ -576,6 +582,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       case at.SECTION_OPTIONS_CHANGED:
         if (action.data === SECTION_ID) {
           await this.clearCache();
+          console.log(3);
           this.uninit();
           this.init();
         }
@@ -623,6 +630,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
             const options = JSON.parse(action.data.value);
             if (this.processAffinityProividerVersion(options)) {
               await this.clearCache();
+              console.log(2);
               this.uninit();
               this.init();
             }
