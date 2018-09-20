@@ -5,7 +5,7 @@ const TIME_SEGMENTS = [
   {"id": "hour", "startTime": 3600, "endTime": 0, "weightPosition": 1},
   {"id": "day", "startTime": 86400, "endTime": 3600, "weightPosition": 0.75},
   {"id": "week", "startTime": 604800, "endTime": 86400, "weightPosition": 0.5},
-  {"id": "weekPlus", "startTime": null, "endTime": 604800, "weightPosition": 0.25}
+  {"id": "weekPlus", "startTime": null, "endTime": 604800, "weightPosition": 0.25},
 ];
 
 const PARAMETER_SETS = {
@@ -16,7 +16,7 @@ const PARAMETER_SETS = {
     "perfectFrequencyVisits": 10,
     "perfectCombinedDomainScore": 2,
     "multiDomainBoost": 0.1,
-    "itemScoreFactor": 0
+    "itemScoreFactor": 0,
   },
   "paramSet2": {
     "recencyFactor": 1,
@@ -25,8 +25,8 @@ const PARAMETER_SETS = {
     "perfectFrequencyVisits": 10,
     "perfectCombinedDomainScore": 2,
     "multiDomainBoost": 0.1,
-    "itemScoreFactor": 0
-  }
+    "itemScoreFactor": 0,
+  },
 };
 
 describe("Personality Provider", () => {
@@ -54,7 +54,7 @@ describe("Personality Provider", () => {
     ({PersonalityProvider} = injector({
       "lib/NaiveBayesTextTagger.jsm": {NaiveBayesTextTagger: NaiveBayesTextTaggerStub},
       "lib/NmfTextTagger.jsm": {NmfTextTagger: NmfTextTaggerStub},
-      "lib/RecipeExecutor.jsm": {RecipeExecutor: RecipeExecutorStub}
+      "lib/RecipeExecutor.jsm": {RecipeExecutor: RecipeExecutorStub},
     }));
 
     instance = new PersonalityProvider(TIME_SEGMENTS, PARAMETER_SETS);
@@ -65,7 +65,7 @@ describe("Personality Provider", () => {
       interest_finalizer: "interest_finalizer",
       item_to_rank_builder: "item_to_rank_builder",
       item_ranker: "item_ranker",
-      interest_combiner: "interest_combiner"
+      interest_combiner: "interest_combiner",
     };
 
     // mock the RecipeExecutor
@@ -105,7 +105,7 @@ describe("Personality Provider", () => {
           return {type: item1.type, score: item1.score + item2.score};
         }
         return null;
-      }
+      },
     };
   });
   afterEach(() => {
@@ -193,7 +193,7 @@ describe("Personality Provider", () => {
 
       instance.getRemoteSettings = async name => [
         {key: "nb_model_sports", data: {model_type: "nb"}},
-        {key: "nmf_model_sports", data: {model_type: "nmf", parent_tag: "nmf_sports_parent_tag"}}
+        {key: "nmf_model_sports", data: {model_type: "nmf", parent_tag: "nmf_sports_parent_tag"}},
       ];
       instance.getNaiveBayesTextTagger = model => model;
       instance.getNmfTextTagger = model => model;
@@ -211,7 +211,7 @@ describe("Personality Provider", () => {
 
       instance.getRemoteSettings = async name => [
         {key: "nb_model_sports", data: {model_type: "nb"}},
-        {key: "nmf_model_sports", data: {model_type: "nmf", parent_tag: "nmf_sports_parent_tag"}}
+        {key: "nmf_model_sports", data: {model_type: "nmf", parent_tag: "nmf_sports_parent_tag"}},
       ];
       instance.getNaiveBayesTextTagger = model => model;
       instance.getNmfTextTagger = model => model;
@@ -226,7 +226,7 @@ describe("Personality Provider", () => {
       sinon.stub(instance, "getRecipeExecutor");
 
       instance.getRemoteSettings = async name => [
-        {key: "nb_model_sports", data: {model_type: "nb"}}
+        {key: "nb_model_sports", data: {model_type: "nb"}},
       ];
       instance.getNaiveBayesTextTagger = model => model;
       instance.getNmfTextTagger = model => model;
@@ -259,20 +259,20 @@ describe("Personality Provider", () => {
           title: "automotive",
           description: "something about automotive",
           url: "http://example.com/automotive",
-          frecency: 10
+          frecency: 10,
         },
         {
           title: "fashion",
           description: "something about fashion",
           url: "http://example.com/fashion",
-          frecency: 5
+          frecency: 5,
         },
         {
           title: "tech",
           description: "something about tech",
           url: "http://example.com/tech",
-          frecency: 1
-        }
+          frecency: 1,
+        },
       ];
 
       instance.fetchHistory = async () => mockHistory;

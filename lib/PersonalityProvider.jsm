@@ -122,7 +122,7 @@ this.PersonalityProvider = class PersonalityProvider {
     const {activityStreamProvider} = this.getNewTabUtils();
     const history = await activityStreamProvider.executePlacesQuery(sql, {
       columns,
-      params: {}
+      params: {},
     });
 
     return history;
@@ -191,7 +191,7 @@ this.PersonalityProvider = class PersonalityProvider {
       parameterSets: this.parameterSets,
       maxHistoryQueryResults: this.maxHistoryQueryResults,
       version: this.version,
-      scores: true
+      scores: true,
     };
   }
 };

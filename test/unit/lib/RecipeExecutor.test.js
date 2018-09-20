@@ -182,13 +182,13 @@ describe("RecipeExecutor", () => {
         tag2: {
           tag21: 0.8,
           tag22: 0.7,
-          tag23: 0.6
+          tag23: 0.6,
         },
         tag3: {
           tag31: 0.7,
           tag32: 0.6,
-          tag33: 0.5
-        }
+          tag33: 0.5,
+        },
       });
       assert.deepEqual(item.nmf_tags_parent, {
         tag21: "tag2",
@@ -514,7 +514,7 @@ describe("RecipeExecutor", () => {
     });
   });
 
-  describe.only("#scalarAdd", () => {
+  describe("#scalarAdd", () => {
     it("should error for a missing field", () => {
       item = instance.scalarAdd(item, {field: "missing", k: 10});
       assert.equal(item, null);

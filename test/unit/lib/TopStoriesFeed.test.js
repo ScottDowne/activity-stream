@@ -597,13 +597,13 @@ describe("Top Stories Feed", () => {
             "perfectFrequencyVisits": 10,
             "perfectCombinedDomainScore": 2,
             "multiDomainBoost": 0.1,
-            "itemScoreFactor": 0
-          }
+            "itemScoreFactor": 0,
+          },
         },
         "scores": {"a.com": 1, "b.com": 0.9},
         "maxHistoryQueryResults": 1000,
         "timeSegments": {},
-        "version": "v1"
+        "version": "v1",
       };
 
       instance.cache.get = () => ({domainAffinities});
@@ -622,13 +622,13 @@ describe("Top Stories Feed", () => {
             "perfectFrequencyVisits": 10,
             "perfectCombinedDomainScore": 2,
             "multiDomainBoost": 0.1,
-            "itemScoreFactor": 0
-          }
+            "itemScoreFactor": 0,
+          },
         },
         "scores": {"a.com": 1, "b.com": 0.9},
         "maxHistoryQueryResults": 1000,
         "timeSegments": {},
-        "version": "v1"
+        "version": "v1",
       };
 
       instance.cache.get = () => ({domainAffinities});
