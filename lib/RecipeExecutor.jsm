@@ -49,7 +49,7 @@ this.RecipeExecutor = class RecipeExecutor {
       l2_normalize: this.l2Normalize,
       prob_normalize: this.probNormalize,
       set_default: this.setDefault,
-      lookupValue: this.lookupValue,
+      lookup_value: this.lookupValue,
       copy_to_map: this.copyToMap,
       scalar_multiply_tag: this.scalarMultiplyTag,
       apply_softmax_tags: this.applySoftmaxTags,
@@ -1068,8 +1068,10 @@ this.RecipeExecutor = class RecipeExecutor {
   executeRecipe(item, recipe) {
     let newItem = item;
     for (let step of recipe) {
+      console.log("trying op", this.ITEM_BUILDER_REGISTRY, step.function);
       let op = this.ITEM_BUILDER_REGISTRY[step.function];
       if (op === undefined) {
+        console.log("op is undefined");
         return null;
       }
       newItem = op.call(this, newItem, step);

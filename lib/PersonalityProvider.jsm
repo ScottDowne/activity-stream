@@ -169,11 +169,14 @@ this.PersonalityProvider = class PersonalityProvider {
       return -1;
     }
     let rankingVector = JSON.parse(JSON.stringify(this.interestVector));
+    console.log("first:", rankingVector);
     Object.keys(scorableItem).forEach(key => {
       rankingVector[key] = scorableItem[key];
     });
+    console.log("second:", rankingVector);
     rankingVector = this.recipeExecutor.executeRecipe(rankingVector, this.interestConfig.item_ranker);
 
+    console.log("third:", rankingVector);
     if (rankingVector === null) {
       console.log("ERROR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
       return -1;
