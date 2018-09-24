@@ -1063,7 +1063,7 @@ this.RecipeExecutor = class RecipeExecutor {
   /**
    * Executes a recipe. Returns an object on success, or null on failure.
    */
-  executeRecipe(item, recipe, debug=false) {
+  executeRecipe(item, recipe, debug = false) {
     let newItem = item;
     for (let step of recipe) {
       if (debug) {
