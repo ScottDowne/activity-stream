@@ -102,10 +102,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
     SectionsManager.disableSection(SECTION_ID);
   }
 
-  onUninit() {
-    SectionsManager.onceInitialized(this.onUninit.bind(this));
-  }
-
   getPocketState(target) {
     const action = {type: at.POCKET_LOGGED_IN, data: pktApi.isUserLoggedIn()};
     this.store.dispatch(ac.OnlyToOneContent(action, target));
