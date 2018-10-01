@@ -41,6 +41,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   async onInit() {
     SectionsManager.enableSection(SECTION_ID);
     try {
+      console.log("In init ++++++++++++++++++++++++++");
       const {options} = SectionsManager.sections.get(SECTION_ID);
       const apiKey = this.getApiKeyFromPref(options.api_key_pref);
       this.stories_endpoint = this.produceFinalEndpointUrl(options.stories_endpoint, apiKey);
@@ -607,6 +608,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
   async onAction(action) {
     switch (action.type) {
       case at.INIT:
+        console.log("third init call");
         this.init();
         break;
       case at.SYSTEM_TICK:
@@ -630,6 +632,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
         if (action.data === SECTION_ID) {
           await this.clearCache();
           this.uninit();
+          console.log("second init call");
           this.init();
         }
         break;
@@ -677,6 +680,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
             if (this.processAffinityProividerVersion(options)) {
               await this.clearCache();
               this.uninit();
+              console.log("first init call");
               this.init();
             }
           } catch (e) {

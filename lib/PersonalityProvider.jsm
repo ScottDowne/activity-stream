@@ -64,6 +64,7 @@ this.PersonalityProvider = class PersonalityProvider {
     start = Date.now();
 
     this.recipeExecutor = await this.generateRecipeExecutor();
+    console.log(this.recipeExecutor);
     if (!this.recipeExecutor) {
       return;
     }
@@ -86,7 +87,6 @@ this.PersonalityProvider = class PersonalityProvider {
 
       time = Date.now() - start;
       this.profileResults("createInterestVector no cache", version, time);
-
     }
     this.initialized = true;
   }
@@ -115,24 +115,61 @@ this.PersonalityProvider = class PersonalityProvider {
   async generateRecipeExecutor() {
     let nbTaggers = [];
     let nmfTaggers = {};
+    const version = 2;
+    let time = 0;
+    let start = 0;
+    let loopStart = 0;
+    let rsStart = 0;
+    let profileResults = {
+      reTime: 0,
+      nbTime: 0,
+      nmfTime: 0,
+      loopTime: 0,
+      rsTime: 0,
+    };
+    rsStart = Date.now();
     const models = await this.getFromRemoteSettings("personality-provider-models");
+    time = Date.now() - rsStart;
+    profileResults.rsTime = time;
 
     if (models.length === 0) {
       return null;
     }
 
+    loopStart = Date.now();
     for (let model of models) {
       if (!model || !this.modelKeys.includes(model.key)) {
         continue;
       }
 
       if (model.data.model_type === "nb") {
+        start = Date.now();
         nbTaggers.push(new NaiveBayesTextTagger(model.data));
+        time = Date.now() - start;
+        profileResults.nbTime += time;
       } else if (model.data.model_type === "nmf") {
+        start = Date.now();
         nmfTaggers[model.data.parent_tag] = new NmfTextTagger(model.data);
+        time = Date.now() - start;
+        profileResults.nmfTime += time;
       }
     }
-    return new RecipeExecutor(nbTaggers, nmfTaggers);
+    time = Date.now() - loopStart;
+    profileResults.loopTime = time;
+
+
+    start = Date.now();
+
+    const result = new RecipeExecutor(nbTaggers, nmfTaggers);
+    time = Date.now() - start;
+    profileResults.reTime = time;
+
+    this.profileResults("nb", version, profileResults.nbTime);
+    this.profileResults("nmf", version, profileResults.nmfTime);
+    this.profileResults("new RecipeExecutor", version, profileResults.reTime);
+    this.profileResults("loop time", version, profileResults.loopTime);
+    this.profileResults("getFromRemoteSettings", version, profileResults.rsTime);
+    return result;
   }
 
   /**
