@@ -153,8 +153,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
     }
     start = Date.now();
     const providerv1 = this.UserDomainAffinityProvider(...args);
-    time = Date.now() - start
-
+    time = Date.now() - start;
 
     this.profileResults("affinityProividerSwitcher and init", version, time);
     return providerv1;
@@ -233,12 +232,9 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
     const result = this.affinityProvider.calculateItemRelevanceScore(s);
 
-
-    time = Date.now() - start
+    time = Date.now() - start;
 
     profileResults.time += time;
-
-    
 
     return result;
   }
@@ -248,7 +244,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
       return [];
     }
 
-
     const {affinityProviderV2} = this;
     let version = 1;
     if (affinityProviderV2 && affinityProviderV2.use_v2) {
@@ -256,7 +251,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
     }
 
     let profileResults = {
-      time: 0
+      time: 0,
     };
 
     const result = items
@@ -278,8 +273,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
       }))
       .sort(this.personalized ? this.compareScore : (a, b) => 0);
 
-
-      this.profileResults("profileCalculateItemRelevanceScore", version, profileResults.time);
+    this.profileResults("profileCalculateItemRelevanceScore", version, profileResults.time);
 
     return result;
   }
