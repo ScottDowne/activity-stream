@@ -61,8 +61,8 @@ this.PersonalityProvider = class PersonalityProvider {
 
     time = Date.now() - start;
     this.profileResults("get recipe", version, time);
-    start = Date.now();
 
+    start = Date.now();
     this.recipeExecutor = await this.generateRecipeExecutor();
     console.log(this.recipeExecutor);
     if (!this.recipeExecutor) {
@@ -120,17 +120,30 @@ this.PersonalityProvider = class PersonalityProvider {
     let start = 0;
     let loopStart = 0;
     let rsStart = 0;
+    let cacheStart = 0;
     let profileResults = {
       reTime: 0,
       nbTime: 0,
       nmfTime: 0,
       loopTime: 0,
       rsTime: 0,
+      cacheTime: 0,
     };
-    rsStart = Date.now();
-    const models = await this.getFromRemoteSettings("personality-provider-models");
-    time = Date.now() - rsStart;
-    profileResults.rsTime = time;
+
+    cacheStart = Date.now();
+    let models = await this.store.get("personality-provider-models");
+    //let models;
+    time = Date.now() - cacheStart;
+    profileResults.cacheTime = time;
+
+
+    if (!models) {
+      rsStart = Date.now();
+      models = await this.getFromRemoteSettings("personality-provider-models");
+      time = Date.now() - rsStart;
+      profileResults.rsTime = time;
+      this.store.set("personality-provider-models", models);
+    }
 
     if (models.length === 0) {
       return null;
@@ -169,6 +182,7 @@ this.PersonalityProvider = class PersonalityProvider {
     this.profileResults("new RecipeExecutor", version, profileResults.reTime);
     this.profileResults("loop time", version, profileResults.loopTime);
     this.profileResults("getFromRemoteSettings", version, profileResults.rsTime);
+    this.profileResults("cache get for personality-provider-models", version, profileResults.cacheTime);
     return result;
   }
 
