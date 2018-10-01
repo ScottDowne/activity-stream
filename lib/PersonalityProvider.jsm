@@ -37,26 +37,56 @@ this.PersonalityProvider = class PersonalityProvider {
     this.store = new PersistentCache("personality-provider", true);
   }
 
+  profileResults(title, version, time) {
+    console.log(" ");
+    console.log("========================");
+    console.log("PROFILE RESULTS FOR:", title);
+    console.log("v:", version);
+    console.log("t (in ms):", time);
+    console.log("t (in s):", time / 1000);
+    console.log("========================");
+  }
+
   async init() {
+
+    let time = 0;
+    let start = 0;
+    let version = 2;
+
+    start = Date.now();
     this.interestConfig = await this.getRecipe();
     if (!this.interestConfig) {
       return;
     }
+
+    time = Date.now() - start;
+    this.profileResults("get recipe", version, time);
+    start = Date.now();
+
     this.recipeExecutor = await this.generateRecipeExecutor();
     if (!this.recipeExecutor) {
       return;
     }
-    this.interestVector = await this.store.get("interest-vector");
+
+    time = Date.now() - start;
+    this.profileResults("generate recipe executor", version, time);
+
+    //this.interestVector = await this.store.get("interest-vector");
 
     // Fetch a new one if none exists or every set update time.
     if (!this.interestVector ||
       (Date.now() - this.interestVector.lastUpdate) >= STORE_UPDATE_TIME) {
+      start = Date.now();
       this.interestVector = await this.createInterestVector();
       if (!this.interestVector) {
         return;
       }
       this.interestVector.lastUpdate = Date.now();
       this.store.set("interest-vector", this.interestVector);
+
+      time = Date.now() - start;
+      this.profileResults("createInterestVector no cache", version, time);
+
     }
     this.initialized = true;
   }
@@ -135,6 +165,8 @@ this.PersonalityProvider = class PersonalityProvider {
     let endTimeSecs = ((new Date()).getTime() / 1000);
     let beginTimeSecs = endTimeSecs - this.interestConfig.history_limit_secs;
     let history = await this.fetchHistory(this.interestConfig.history_required_fields, beginTimeSecs, endTimeSecs);
+
+    console.log("history length:", history.length);
 
     for (let historyRec of history) {
       let ivItem = this.recipeExecutor.executeRecipe(historyRec, this.interestConfig.history_item_builder);
