@@ -539,7 +539,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "PERSONALIZATION_V2_GETRECIPE_DURATION",
+  "event": "PERSONALIZATION_V2_GET_RECIPE_DURATION",
   "value": 43
 }
 ```
@@ -626,7 +626,7 @@ These report any failures during domain affinity v2 calculations, and where it f
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "PERSONALIZATION_V2_GETRECIPE_ERROR"
+  "event": "PERSONALIZATION_V2_GET_RECIPE_ERROR"
 }
 ```
 
