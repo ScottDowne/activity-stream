@@ -516,6 +516,20 @@ This reports the duration of the domain affinity calculation in milliseconds.
 
 These report the duration of the domain affinity v2 calculations in milliseconds.
 
+#### Total calculation in ms
+
+```js
+{
+  "action": "activity_stream_performance_event",
+  "client_id": "26288a14-5cc4-d14f-ae0a-bb01ef45be9c",
+  "addon_version": "20180710100040",
+  "locale": "en-US",
+  "user_prefs": 7,
+  "event": "PERSONALIZATION_V2_TOTAL_DURATION",
+  "value": 43
+}
+```
+
 #### getRecipe calculation in ms
 
 ```js
@@ -525,7 +539,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 getRecipe calculation in ms",
+  "event": "PERSONALIZATION_V2_GETRECIPE_DURATION",
   "value": 43
 }
 ```
@@ -539,7 +553,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 RecipeExecutor calculation in ms",
+  "event": "PERSONALIZATION_V2_RECIPE_EXECUTOR_DURATION",
   "value": 43
 }
 ```
@@ -553,7 +567,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 taggers calculation in ms",
+  "event": "PERSONALIZATION_V2_TAGGERS_DURATION",
   "value": 43
 }
 ```
@@ -567,7 +581,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 createInterestVector calculation in ms",
+  "event": "PERSONALIZATION_V2_CREATE_INTEREST_VECTOR_DURATION",
   "value": 43
 }
 ```
@@ -581,7 +595,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 calculateItemRelevanceScore calculation in ms",
+  "event": "PERSONALIZATION_V2_ITEM_RELEVANCE_SCORE_DURATION",
   "value": 43
 }
 ```
@@ -595,7 +609,7 @@ These report the duration of the domain affinity v2 calculations in milliseconds
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 history size"
+  "event": "PERSONALIZATION_V2_HISTORY_SIZE",
 }
 ```
 
@@ -612,7 +626,7 @@ These report any failures during domain affinity v2 calculations, and where it f
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 getRecipe error"
+  "event": "PERSONALIZATION_V2_GETRECIPE_ERROR"
 }
 ```
 
@@ -625,7 +639,7 @@ These report any failures during domain affinity v2 calculations, and where it f
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 generateRecipeExecutor error"
+  "event": "PERSONALIZATION_V2_GENERATE_RECIPE_EXECUTOR_ERROR"
 }
 ```
 
@@ -638,7 +652,7 @@ These report any failures during domain affinity v2 calculations, and where it f
   "addon_version": "20180710100040",
   "locale": "en-US",
   "user_prefs": 7,
-  "event": "domain affinity v2 createInterestVector error"
+  "event": "PERSONALIZATION_V2_CREATE_INTEREST_VECTOR_ERROR"
 }
 ```
 
