@@ -412,7 +412,6 @@ function Snippets(prevState = INITIAL_STATE.Snippets, action) {
 function Pocket(prevState = INITIAL_STATE.Pocket, action) {
   switch (action.type) {
     case at.POCKET_DOMAIN_AFFINITIES:
-      console.log("in reducer", action.data, action);
       return {...prevState, domainAffinities: action.data};
     case at.POCKET_WAITING_FOR_SPOC:
       return {...prevState, waitingForSpoc: action.data};
