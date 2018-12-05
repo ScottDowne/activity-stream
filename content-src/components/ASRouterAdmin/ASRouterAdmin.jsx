@@ -385,11 +385,26 @@ export class ASRouterAdminInner extends React.PureComponent {
     </tr>);
   }
 
+  renderPocketAffinities() {
+    if (this.props.Pocket && this.props.Pocket.domainAffinities) {
+      return (<div>
+        <h2>Interest Vector</h2>
+        <pre>{JSON.stringify(this.props.Pocket.domainAffinities.scores.interestVector, null, 2)}</pre>
+        <h2>Interest Config</h2>
+        <pre>{JSON.stringify(this.props.Pocket.domainAffinities.scores.interestConfig, null, 2)}</pre>
+        <h2>Personality Prover Settings</h2>
+        <div>{`file://${this.props.Pocket.domainAffinities.scores.dir}/`}</div>
+      </div>);
+    }
+
+    return null;
+  }
+
   renderPocketStories() {
     const topstories = this.props.Sections.filter(Section => Section.id === "topstories");
 
     return (<table><tbody>
-      {topstories[0].rows.map(story => this.renderPocketStory(story))}
+      {topstories.map(section => section.rows.map(story => this.renderPocketStory(story)))}
     </tbody></table>);
   }
 
@@ -432,6 +447,7 @@ export class ASRouterAdminInner extends React.PureComponent {
         return (<React.Fragment>
           <h2>Pocket</h2>
           {this.renderPocketStories()}
+          {this.renderPocketAffinities()}
         </React.Fragment>);
       default:
         return (<React.Fragment>
@@ -472,4 +488,4 @@ export class ASRouterAdminInner extends React.PureComponent {
 }
 
 export const _ASRouterAdmin = props => (<SimpleHashRouter><ASRouterAdminInner {...props} /></SimpleHashRouter>);
-export const ASRouterAdmin = connect(state => ({Sections: state.Sections}))(_ASRouterAdmin);
+export const ASRouterAdmin = connect(state => ({Sections: state.Sections, Pocket: state.Pocket}))(_ASRouterAdmin);

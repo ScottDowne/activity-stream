@@ -135,6 +135,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
     this.domainAffinitiesLastUpdated = Date.now();
     affinities._timestamp = this.domainAffinitiesLastUpdated;
     this.cache.set("domainAffinities", affinities);
+    this.dispatchAffinities(affinities);
   }
 
   affinityProividerSwitcher(...args) {
@@ -408,6 +409,11 @@ this.TopStoriesFeed = class TopStoriesFeed {
   dispatchSpocDone(target) {
     const action = {type: at.POCKET_WAITING_FOR_SPOC, data: false};
     this.store.dispatch(ac.OnlyToOneContent(action, target));
+  }
+
+  dispatchAffinities(affinities) {
+    const action = {type: at.POCKET_DOMAIN_AFFINITIES, data: affinities};
+    this.store.dispatch(ac.BroadcastToContent(action));
   }
 
   filterSpocs() {

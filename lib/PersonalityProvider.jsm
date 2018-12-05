@@ -363,6 +363,7 @@ this.PersonalityProvider = class PersonalityProvider {
       scores: {
         interestConfig: this.interestConfig,
         interestVector: this.interestVector,
+        dir: PERSONALITY_PROVIDER_DIR,
         taggers: this.taggers,
       },
     };
