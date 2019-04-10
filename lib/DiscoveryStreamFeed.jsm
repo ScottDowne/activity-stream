@@ -231,7 +231,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    *                     the scope for isStartup and the promises object.
    *                     Combines feed results and promises for each component with a feed.
    */
-  buildFeedPromise({newFeedsPromises, newFeeds}, isStartup) {
+  buildFeedPromise(accumulator, isStartup) {
+    const {newFeedsPromise, newFeeds} = accumulator;
     return component => {
       const {url} = component.feed;
 
@@ -259,7 +260,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
           Cu.reportError(`Error trying to load component feed ${url}: ${error}`);
         });
 
-        newFeedsPromises.push(feedPromise);
+        // When the last one is done, resolve this one.
+        accumulator.newFeedsPromise = newFeedsPromise.then(() => feedPromise);
       }
     };
   }
@@ -290,6 +292,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     };
   }
 
+  // TODO: Fix up comments.
+
   /**
    * buildFeedPromises - Filters out rows with no components,
    *                     and gets us a promise for each unique feed.
@@ -300,7 +304,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    */
   buildFeedPromises(layout, isStartup) {
     const initialData = {
-      newFeedsPromises: [],
+      newFeedsPromise: Promise.resolve(),
       newFeeds: {},
     };
     return layout
@@ -319,10 +323,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     // was issued to fetch the component feed in `getComponentFeed()`.
     this.componentFeedFetched = false;
     const start = perfService.absNow();
-    const {newFeedsPromises, newFeeds} = this.buildFeedPromises(DiscoveryStream.layout, isStartup);
+    const {newFeedsPromise, newFeeds} = this.buildFeedPromises(DiscoveryStream.layout, isStartup);
 
     // Each promise has a catch already built in, so no need to catch here.
-    await Promise.all(newFeedsPromises);
+    await newFeedsPromise;
 
     if (this.componentFeedFetched) {
       this.cleanUpTopRecImpressionPref(newFeeds);
