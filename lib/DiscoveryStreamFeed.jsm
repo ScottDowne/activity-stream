@@ -231,7 +231,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    *                     the scope for isStartup and the promises object.
    *                     Combines feed results and promises for each component with a feed.
    */
-  buildFeedPromise(accumulator, isStartup) {
+  buildFeedPromise(accumulator, isStartup, sendUpdate) {
     const {newFeedsPromise, newFeeds} = accumulator;
     return component => {
       const {url} = component.feed;
@@ -243,6 +243,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         const feedPromise = this.getComponentFeed(url, isStartup);
         feedPromise.then(feed => {
           newFeeds[url] = this.filterRecommendations(feed);
+          sendUpdate({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {
+            feed: newFeeds[url],
+            url,
+          }});
 
           // We grab affinities off the first feed for the moment.
           // Ideally this would be returned from the server on the layout,
@@ -283,11 +287,11 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    * @returns {Function} We return a function so we can contain the scope for isStartup.
    *                     Reduces feeds into promises and feed data.
    */
-  reduceFeedComponents(isStartup) {
+  reduceFeedComponents(isStartup, sendUpdate) {
     return (accumulator, row) => {
       row.components
         .filter(component => component && component.feed)
-        .forEach(this.buildFeedPromise(accumulator, isStartup));
+        .forEach(this.buildFeedPromise(accumulator, isStartup, sendUpdate));
       return accumulator;
     };
   }
@@ -302,14 +306,14 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    * @returns {Object} An object with newFeedsPromises (Array) and newFeeds (Object),
    *                   we can Promise.all newFeedsPromises to get completed data in newFeeds.
    */
-  buildFeedPromises(layout, isStartup) {
+  buildFeedPromises(layout, isStartup, sendUpdate) {
     const initialData = {
       newFeedsPromise: Promise.resolve(),
       newFeeds: {},
     };
     return layout
       .filter(row => row && row.components)
-      .reduce(this.reduceFeedComponents(isStartup), initialData);
+      .reduce(this.reduceFeedComponents(isStartup, sendUpdate), initialData);
   }
 
   async loadComponentFeeds(sendUpdate, isStartup) {
@@ -323,7 +327,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     // was issued to fetch the component feed in `getComponentFeed()`.
     this.componentFeedFetched = false;
     const start = perfService.absNow();
-    const {newFeedsPromise, newFeeds} = this.buildFeedPromises(DiscoveryStream.layout, isStartup);
+    const {newFeedsPromise, newFeeds} = this.buildFeedPromises(DiscoveryStream.layout, isStartup, sendUpdate);
 
     // Each promise has a catch already built in, so no need to catch here.
     await newFeedsPromise;
@@ -333,7 +337,6 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       this.componentFeedRequestTime = Math.round(perfService.absNow() - start);
     }
     await this.cache.set("feeds", newFeeds);
-    sendUpdate({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: newFeeds});
   }
 
   async loadSpocs(sendUpdate, isStartup) {
