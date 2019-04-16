@@ -51,14 +51,23 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
     filterArray.push(...DS_COMPONENTS);
   }
 
+  let done = false;
+
   return layout.map(row => ({
     ...row,
 
     // Loops through desired components and adds a .data property
     // containing data from feeds
     components: row.components.filter(c => !filterArray.includes(c.type)).map(component => {
-      if (!component.feed || !feeds.data[component.feed.url]) {
+      if (done) {
+        return;
+      }
+      if (!component.feed) {
         return component;
+      }
+      if (!feeds.data[component.feed.url]) {
+        done = true;
+        return;
       }
 
       positions[component.type] = positions[component.type] || 0;

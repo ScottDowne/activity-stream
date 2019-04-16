@@ -241,31 +241,33 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         // we then fill in with the proper object inside the promise.
         newFeeds[url] = {};
         const feedPromise = this.getComponentFeed(url, isStartup);
-        feedPromise.then(feed => {
-          newFeeds[url] = this.filterRecommendations(feed);
-          sendUpdate({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {
-            feed: newFeeds[url],
-            url,
-          }});
-
-          // We grab affinities off the first feed for the moment.
-          // Ideally this would be returned from the server on the layout,
-          // or from another endpoint.
-          if (!this.affinities) {
-            const {settings} = feed.data;
-            this.affinities = {
-              timeSegments: settings.timeSegments,
-              parameterSets: settings.domainAffinityParameterSets,
-              maxHistoryQueryResults: settings.maxHistoryQueryResults || DEFAULT_MAX_HISTORY_QUERY_RESULTS,
-              version: settings.version,
-            };
-          }
-        }).catch(/* istanbul ignore next */ error => {
-          Cu.reportError(`Error trying to load component feed ${url}: ${error}`);
-        });
 
         // When the last one is done, resolve this one.
-        accumulator.newFeedsPromise = newFeedsPromise.then(() => feedPromise);
+        accumulator.newFeedsPromise = newFeedsPromise.then(() => {
+          feedPromise.then(feed => {
+            newFeeds[url] = this.filterRecommendations(feed);
+            sendUpdate({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {
+              feed: newFeeds[url],
+              url,
+            }});
+
+            // We grab affinities off the first feed for the moment.
+            // Ideally this would be returned from the server on the layout,
+            // or from another endpoint.
+            if (!this.affinities) {
+              const {settings} = feed.data;
+              this.affinities = {
+                timeSegments: settings.timeSegments,
+                parameterSets: settings.domainAffinityParameterSets,
+                maxHistoryQueryResults: settings.maxHistoryQueryResults || DEFAULT_MAX_HISTORY_QUERY_RESULTS,
+                version: settings.version,
+              };
+            }
+          }).catch(/* istanbul ignore next */ error => {
+            Cu.reportError(`Error trying to load component feed ${url}: ${error}`);
+          });
+          return feedPromise;
+        });
       }
     };
   }
@@ -744,6 +746,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   resetState() {
+    this.time = 0;
     // Reset reducer
     this.store.dispatch(ac.BroadcastToContent({type: at.DISCOVERY_STREAM_LAYOUT_RESET}));
     this.loaded = false;

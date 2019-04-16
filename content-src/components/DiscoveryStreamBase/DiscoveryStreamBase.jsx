@@ -170,9 +170,6 @@ export class _DiscoveryStreamBase extends React.PureComponent {
     // Select layout render data by adding spocs and position to recommendations
     const layoutRender = selectLayoutRender(this.props.DiscoveryStream, this.props.Prefs.values, rickRollCache);
     const {config, feeds, spocs} = this.props.DiscoveryStream;
-    if (!spocs.loaded || !feeds.loaded) {
-      return null;
-    }
 
     // Allow rendering without extracting special components
     if (!config.collapsible) {
@@ -199,6 +196,10 @@ export class _DiscoveryStreamBase extends React.PureComponent {
 
     // Get "topstories" Section state for default values
     const topStories = this.props.Sections.find(s => s.id === "topstories");
+
+    if (!topStories) {
+      return null;
+    }
 
     // Extract TopSites to render before the rest and Message to use for header
     const topSites = extractComponent("TopSites");
@@ -247,6 +248,9 @@ export class _DiscoveryStreamBase extends React.PureComponent {
           <div key={`row-${rowIndex}`} className={`ds-column ds-column-${row.width}`}>
             <div className="ds-column-grid">
               {row.components.map((component, componentIndex) => {
+                if (!component) {
+                  return;
+                }
                 styles[rowIndex] = [...styles[rowIndex] || [], component.styles];
                 return (<div key={`component-${componentIndex}`}>
                   {this.renderComponent(component, row.width)}
