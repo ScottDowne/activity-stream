@@ -169,7 +169,7 @@ export class _DiscoveryStreamBase extends React.PureComponent {
   render() {
     // Select layout render data by adding spocs and position to recommendations
     const layoutRender = selectLayoutRender(this.props.DiscoveryStream, this.props.Prefs.values, rickRollCache);
-    const {config, feeds, spocs} = this.props.DiscoveryStream;
+    const {config} = this.props.DiscoveryStream;
 
     // Allow rendering without extracting special components
     if (!config.collapsible) {
@@ -249,7 +249,7 @@ export class _DiscoveryStreamBase extends React.PureComponent {
             <div className="ds-column-grid">
               {row.components.map((component, componentIndex) => {
                 if (!component) {
-                  return;
+                  return null;
                 }
                 styles[rowIndex] = [...styles[rowIndex] || [], component.styles];
                 return (<div key={`component-${componentIndex}`}>
