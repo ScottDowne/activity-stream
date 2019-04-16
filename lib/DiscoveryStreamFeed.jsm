@@ -749,7 +749,6 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   resetState() {
-    this.time = 0;
     // Reset reducer
     this.store.dispatch(ac.BroadcastToContent({type: at.DISCOVERY_STREAM_LAYOUT_RESET}));
     this.loaded = false;
