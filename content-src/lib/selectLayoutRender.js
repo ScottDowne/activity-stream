@@ -60,14 +60,14 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
     // containing data from feeds
     components: row.components.filter(c => !filterArray.includes(c.type)).map(component => {
       if (done) {
-        return;
+        return null;
       }
       if (!component.feed) {
         return component;
       }
       if (!feeds.data[component.feed.url]) {
         done = true;
-        return;
+        return null;
       }
 
       positions[component.type] = positions[component.type] || 0;

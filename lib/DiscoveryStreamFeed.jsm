@@ -246,10 +246,13 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         accumulator.newFeedsPromise = newFeedsPromise.then(() => {
           feedPromise.then(feed => {
             newFeeds[url] = this.filterRecommendations(feed);
-            sendUpdate({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {
-              feed: newFeeds[url],
-              url,
-            }});
+            sendUpdate({
+              type: at.DISCOVERY_STREAM_FEED_UPDATE,
+              data: {
+                feed: newFeeds[url],
+                url,
+              },
+            });
 
             // We grab affinities off the first feed for the moment.
             // Ideally this would be returned from the server on the layout,

@@ -505,7 +505,7 @@ function DiscoveryStream(prevState = INITIAL_STATE.DiscoveryStream, action) {
         },
       };
     case at.DISCOVERY_STREAM_FEED_UPDATE:
-      const data = prevState.feeds.data;
+      const {data} = prevState.feeds;
       data[action.data.url] = action.data.feed;
       return {
         ...prevState,
