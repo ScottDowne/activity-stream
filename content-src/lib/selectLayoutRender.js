@@ -87,25 +87,21 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
 
   const renderLayout = () => {
     const renderedLayout = [];
-    for (const row of layout) {
-      if (row.components.length) {
-        let components = [];
-        renderedLayout.push({
-          ...row,
-          components,
-        });
-        for (const component of row.components) {
-          if (!filterArray.includes(component.type)) {
-            if (component.feed) {
-              // Component not ready yet, bail out early.
-              if (!feeds.data[component.feed.url]) {
-                return renderedLayout;
-              }
-              components.push(handleComponent(component));
-            } else {
-              components.push(component);
-            }
+    for (const row of layout.filter(r => r.components.length)) {
+      let components = [];
+      renderedLayout.push({
+        ...row,
+        components,
+      });
+      for (const component of row.components.filter(c => !filterArray.includes(c.type))) {
+        if (component.feed) {
+          // Still waiting on a feed, bail out early.
+          if (!feeds.data[component.feed.url]) {
+            return renderedLayout;
           }
+          components.push(handleComponent(component));
+        } else {
+          components.push(component);
         }
       }
     }
