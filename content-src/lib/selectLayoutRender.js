@@ -51,60 +51,66 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
     filterArray.push(...DS_COMPONENTS);
   }
 
-  //let done = false;
+  const handleComponent = component => {
+    positions[component.type] = positions[component.type] || 0;
 
-  const layoutRender = [];
+    let {data} = feeds.data[component.feed.url];
 
-  layout
-    .filter(row => row.components.length)
-    .some(row => {
-      const components = [];
-      layoutRender.push(components);
+    if (component && component.properties && component.properties.offset) {
+      data = {
+        ...data,
+        recommendations: data.recommendations.slice(component.properties.offset),
+      };
+    }
 
-      return row.components
-        .filter(c => !filterArray.includes(c.type))
-        .some(component => {
-          if (!component.feed) {
-            components.push(component);
-            return false;
-          } else if (!feeds.data[component.feed.url]) {
-            return true;
-          }
+    data = maybeInjectSpocs(data, component.spocs);
 
-          positions[component.type] = positions[component.type] || 0;
+    // If empty, fill rickRollCache with random probability values from bufferRollCache
+    if (!rickRollCache.length) {
+      rickRollCache.push(...bufferRollCache);
+    }
 
-          let {data} = feeds.data[component.feed.url];
+    let items = 0;
+    if (component.properties && component.properties.items) {
+      items = Math.min(component.properties.items, data.recommendations.length);
+    }
 
-          if (component && component.properties && component.properties.offset) {
-            data = {
-              ...data,
-              recommendations: data.recommendations.slice(component.properties.offset),
-            };
-          }
+    // loop through a component items
+    // Store the items position sequentially for multiple components of the same type.
+    // Example: A second card grid starts pos offset from the last card grid.
+    for (let i = 0; i < items; i++) {
+      data.recommendations[i].pos = positions[component.type]++;
+    }
 
-          data = maybeInjectSpocs(data, component.spocs);
+    return {...component, data};
+  };
 
-          // If empty, fill rickRollCache with random probability values from bufferRollCache
-          if (!rickRollCache.length) {
-            rickRollCache.push(...bufferRollCache);
-          }
-
-          let items = 0;
-          if (component.properties && component.properties.items) {
-            items = Math.min(component.properties.items, data.recommendations.length);
-          }
-
-          // loop through a component items
-          // Store the items position sequentially for multiple components of the same type.
-          // Example: A second card grid starts pos offset from the last card grid.
-          for (let i = 0; i < items; i++) {
-            data.recommendations[i].pos = positions[component.type]++;
-          }
-
-          components.push({...component, data});
-          return false;
+  const renderLayout = layout => {
+    const renderedLayout = [];
+    for (const [rowIndex, row] of Object.entries(layout)) {
+      if (row.components.length) {
+        let components = [];
+        renderedLayout.push({
+          ...row,
+          components,
         });
-    });
+        for (const [index, component] of Object.entries(row.components)) {
+          if (!filterArray.includes(component.type)) {
+            if (component.feed) {
+              // Component not ready yet, bail out early.
+              if (!feeds.data[component.feed.url]) {
+                return renderedLayout;
+              }
+              components.push(handleComponent(component));
+            } else {
+              components.push(component);
+            }
+          }
+        }
+      }
+    }
+    return renderedLayout;
+  };
 
-  return layoutRender;
+  return renderLayout(layout);
 };

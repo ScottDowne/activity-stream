@@ -12,6 +12,7 @@ const {UserDomainAffinityProvider} = ChromeUtils.import("resource://activity-str
 
 const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
 const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm");
+Components.utils.import("resource://gre/modules/Timer.jsm");
 
 const CACHE_KEY = "discovery_stream";
 const LAYOUT_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
@@ -28,6 +29,10 @@ const PREF_OPT_OUT = "discoverystream.optOut.0";
 const PREF_SHOW_SPONSORED = "showSponsored";
 const PREF_SPOC_IMPRESSIONS = "discoverystream.spoc.impressions";
 const PREF_REC_IMPRESSIONS = "discoverystream.rec.impressions";
+
+function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 let defaultLayoutResp;
 
@@ -557,8 +562,16 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   async getComponentFeed(feedUrl, isStartup) {
     const cachedData = await this.cache.get() || {};
     const {feeds} = cachedData;
+    if (!this.timer) {
+      this.timer = 1000;
+    } else {
+      this.timer = this.timer + 1000;
+    }
+    await timeout(this.timer);
+
     let feed = feeds ? feeds[feedUrl] : null;
-    if (this.isExpired({cachedData, key: "feed", url: feedUrl, isStartup})) {
+    const isExpired = this.isExpired({cachedData, key: "feed", url: feedUrl, isStartup});
+    if (isExpired) {
       const feedResponse = await this.fetchFromEndpoint(feedUrl);
       if (feedResponse) {
         const scoredItems = this.scoreItems(feedResponse.recommendations);
@@ -728,6 +741,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   async reset() {
+    this.timer = 0;
     this.resetImpressionPrefs();
     await this.resetCache();
     if (this.loaded) {
