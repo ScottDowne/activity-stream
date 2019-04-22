@@ -87,14 +87,14 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
 
   const renderLayout = () => {
     const renderedLayout = [];
-    for (const [rowIndex, row] of Object.entries(layout)) {
+    for (const row of layout) {
       if (row.components.length) {
         let components = [];
         renderedLayout.push({
           ...row,
           components,
         });
-        for (const [index, component] of Object.entries(row.components)) {
+        for (const component of row.components) {
           if (!filterArray.includes(component.type)) {
             if (component.feed) {
               // Component not ready yet, bail out early.
