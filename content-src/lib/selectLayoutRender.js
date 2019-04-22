@@ -85,7 +85,7 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
     return {...component, data};
   };
 
-  const renderLayout = layout => {
+  const renderLayout = () => {
     const renderedLayout = [];
     for (const [rowIndex, row] of Object.entries(layout)) {
       if (row.components.length) {
@@ -112,5 +112,5 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
     return renderedLayout;
   };
 
-  return renderLayout(layout);
+  return renderLayout();
 };
