@@ -500,8 +500,6 @@ function DiscoveryStream(prevState = INITIAL_STATE.DiscoveryStream, action) {
         ...prevState,
         feeds: {
           ...prevState.feeds,
-          data: action.data || prevState.feeds.data,
-          // TODO need to deal with this and spocs?
           loaded: true,
         },
       };
@@ -516,7 +514,6 @@ function DiscoveryStream(prevState = INITIAL_STATE.DiscoveryStream, action) {
             ...prevState.feeds.data,
             ...newData,
           },
-          loaded: true,
         },
       };
     case at.DISCOVERY_STREAM_SPOCS_CAPS:

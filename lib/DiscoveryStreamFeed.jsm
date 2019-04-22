@@ -306,8 +306,6 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     };
   }
 
-  // TODO: Fix up comments.
-
   /**
    * buildFeedPromises - Filters out rows with no components,
    *                     and gets us a promise for each unique feed.
@@ -347,6 +345,9 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       this.componentFeedRequestTime = Math.round(perfService.absNow() - start);
     }
     await this.cache.set("feeds", newFeeds);
+    sendUpdate({
+      type: at.DISCOVERY_STREAM_FEEDS_UPDATE,
+    });
   }
 
   async loadSpocs(sendUpdate, isStartup) {

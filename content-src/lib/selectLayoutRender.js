@@ -7,31 +7,46 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
   // on page refresh and gets filled with random values on first render inside maybeInjectSpocs.
   const isFirstRun = !rickRollCache.length;
 
-  function maybeInjectSpocs(data, spocsConfig) {
-    if (data &&
-        spocsConfig && spocsConfig.positions && spocsConfig.positions.length &&
-        spocs.data.spocs && spocs.data.spocs.length) {
-      const recommendations = [...data.recommendations];
-      for (let position of spocsConfig.positions) {
-        // Cache random number for a position
-        let rickRoll;
-        if (isFirstRun) {
-          rickRoll = Math.random();
-          rickRollCache.push(rickRoll);
-        } else {
-          rickRoll = rickRollCache.shift();
-          bufferRollCache.push(rickRoll);
-        }
-
-        if (spocs.data.spocs[spocIndex] && rickRoll <= spocsConfig.probability) {
-          recommendations.splice(position.index, 0, spocs.data.spocs[spocIndex++]);
-        }
+  function rollForSpocs(data, spocsConfig) {
+    const recommendations = [...data.recommendations];
+    for (let position of spocsConfig.positions) {
+      // Cache random number for a position
+      let rickRoll;
+      if (isFirstRun) {
+        rickRoll = Math.random();
+        rickRollCache.push(rickRoll);
+      } else {
+        rickRoll = rickRollCache.shift();
+        bufferRollCache.push(rickRoll);
       }
 
-      return {
-        ...data,
-        recommendations,
-      };
+      if (spocs.data.spocs[spocIndex] && rickRoll <= spocsConfig.probability) {
+        recommendations.splice(position.index, 0, spocs.data.spocs[spocIndex++]);
+      }
+    }
+
+    return {
+      ...data,
+      recommendations,
+    };
+  }
+
+  function maybeInjectSpocs(data, spocsConfig) {
+    // Do we ever expect to possibly have a spoc.
+    if (data && spocsConfig && spocsConfig.positions && spocsConfig.positions.length) {
+      // We expect a spoc, and spocs are done loading.
+      if (spocs.loaded) {
+        // We expect a spoc, spocs are loaded, but the server returned no spocs.
+        if (!spocs.data.spocs || !spocs.data.spocs.length) {
+          return data;
+        }
+
+        // We expect a spoc, spocs are loaded, and we have spocs available.
+        return rollForSpocs(data, spocsConfig);
+      }
+
+      // We expected a spoc, but non are loaded yet.
+      return data;
     }
 
     return data;
@@ -95,8 +110,10 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
       });
       for (const component of row.components.filter(c => !filterArray.includes(c.type))) {
         if (component.feed) {
-          // Still waiting on a feed, bail out early.
-          if (!feeds.data[component.feed.url]) {
+          const spocsConfig = component.spocs;
+          // Are we still waiting on a feed/spocs, render what we have, and bail out early.
+          if (!feeds.data[component.feed.url] ||
+            (spocsConfig && spocsConfig.positions && spocsConfig.positions.length && !spocs.loaded)) {
             return renderedLayout;
           }
           components.push(handleComponent(component));
