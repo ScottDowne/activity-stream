@@ -169,7 +169,10 @@ export class _DiscoveryStreamBase extends React.PureComponent {
   render() {
     // Select layout render data by adding spocs and position to recommendations
     const layoutRender = selectLayoutRender(this.props.DiscoveryStream, this.props.Prefs.values, rickRollCache);
-    const {config} = this.props.DiscoveryStream;
+    const {config, spocs} = this.props.DiscoveryStream;
+    if (!spocs.loaded) {
+      return null;
+    }
 
     // Allow rendering without extracting special components
     if (!config.collapsible) {

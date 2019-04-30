@@ -57,13 +57,13 @@ const INITIAL_STATE = {
       data: {
         // "https://foo.com/feed1": {lastUpdated: 123, data: []}
       },
-      loaded: true,
+      loaded: false,
     },
     spocs: {
       spocs_endpoint: "",
       lastUpdated: null,
       data: {}, // {spocs: []}
-      loaded: true,
+      loaded: false,
       frequency_caps: [],
     },
   },

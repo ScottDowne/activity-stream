@@ -93,12 +93,6 @@ describe("<DiscoveryStreamBase>", () => {
     assert.equal(wrapper.type(), null);
   });
 
-  it("should render null if feeds not loaded", () => {
-    wrapper = mountComponent({feeds: {loaded: false}});
-
-    assert.equal(wrapper.type(), null);
-  });
-
   it("should render nothing with no layout", () => {
     assert.ok(wrapper.exists());
     assert.isEmpty(wrapper.children());

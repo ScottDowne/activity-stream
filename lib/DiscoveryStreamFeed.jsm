@@ -231,8 +231,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    *                     the scope for isStartup and the promises object.
    *                     Combines feed results and promises for each component with a feed.
    */
-  buildFeedPromise(accumulator, isStartup, sendUpdate) {
-    const {newFeedsPromise, newFeeds} = accumulator;
+  buildFeedPromise({newFeedsPromises, newFeeds}, isStartup, sendUpdate) {
     return component => {
       const {url} = component.feed;
 
@@ -242,35 +241,32 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         newFeeds[url] = {};
         const feedPromise = this.getComponentFeed(url, isStartup);
 
-        // When the last one is done, resolve this one.
-        accumulator.newFeedsPromise = newFeedsPromise.then(() => {
-          feedPromise.then(feed => {
-            newFeeds[url] = this.filterRecommendations(feed);
-            sendUpdate({
-              type: at.DISCOVERY_STREAM_FEED_UPDATE,
-              data: {
-                feed: newFeeds[url],
-                url,
-              },
-            });
-
-            // We grab affinities off the first feed for the moment.
-            // Ideally this would be returned from the server on the layout,
-            // or from another endpoint.
-            if (!this.affinities) {
-              const {settings} = feed.data;
-              this.affinities = {
-                timeSegments: settings.timeSegments,
-                parameterSets: settings.domainAffinityParameterSets,
-                maxHistoryQueryResults: settings.maxHistoryQueryResults || DEFAULT_MAX_HISTORY_QUERY_RESULTS,
-                version: settings.version,
-              };
-            }
-          }).catch(/* istanbul ignore next */ error => {
-            Cu.reportError(`Error trying to load component feed ${url}: ${error}`);
+        feedPromise.then(feed => {
+          newFeeds[url] = this.filterRecommendations(feed);
+          sendUpdate({
+            type: at.DISCOVERY_STREAM_FEED_UPDATE,
+            data: {
+              feed: newFeeds[url],
+              url,
+            },
           });
-          return feedPromise;
+
+          // We grab affinities off the first feed for the moment.
+          // Ideally this would be returned from the server on the layout,
+          // or from another endpoint.
+          if (!this.affinities) {
+            const {settings} = feed.data;
+            this.affinities = {
+              timeSegments: settings.timeSegments,
+              parameterSets: settings.domainAffinityParameterSets,
+              maxHistoryQueryResults: settings.maxHistoryQueryResults || DEFAULT_MAX_HISTORY_QUERY_RESULTS,
+              version: settings.version,
+            };
+          }
+        }).catch(/* istanbul ignore next */ error => {
+          Cu.reportError(`Error trying to load component feed ${url}: ${error}`);
         });
+        newFeedsPromises.push(feedPromise);
       }
     };
   }
@@ -311,7 +307,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    */
   buildFeedPromises(layout, isStartup, sendUpdate) {
     const initialData = {
-      newFeedsPromise: Promise.resolve(),
+      newFeedsPromises: [],
       newFeeds: {},
     };
     return layout
@@ -330,10 +326,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     // was issued to fetch the component feed in `getComponentFeed()`.
     this.componentFeedFetched = false;
     const start = perfService.absNow();
-    const {newFeedsPromise, newFeeds} = this.buildFeedPromises(DiscoveryStream.layout, isStartup, sendUpdate);
+    const {newFeedsPromises, newFeeds} = this.buildFeedPromises(DiscoveryStream.layout, isStartup, sendUpdate);
 
     // Each promise has a catch already built in, so no need to catch here.
-    await newFeedsPromise;
+    await Promise.all(newFeedsPromises);
 
     if (this.componentFeedFetched) {
       this.cleanUpTopRecImpressionPref(newFeeds);
@@ -571,7 +567,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         feed = {
           lastUpdated: Date.now(),
           data: {
-            ...feedResponse,
+            settings: feedResponse.settings,
             recommendations,
           },
         };

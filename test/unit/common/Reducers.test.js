@@ -684,18 +684,6 @@ describe("Reducers", () => {
       const state = DiscoveryStream(undefined, {type: at.DISCOVERY_STREAM_CONFIG_CHANGE, data: {enabled: true}});
       assert.deepEqual(state.config, {enabled: true});
     });
-    it("should load feeds with DISCOVERY_STREAM_FEEDS_UPDATE", () => {
-      const data = {
-        "https://foo.com/feed1": {lastUpdated: 123, data: [1, 2, 3]},
-      };
-
-      const state = DiscoveryStream(undefined, {type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data});
-
-      assert.deepEqual(state.feeds, {
-        data,
-        loaded: true,
-      });
-    });
     it("should set spoc_endpoint with DISCOVERY_STREAM_SPOCS_ENDPOINT", () => {
       const state = DiscoveryStream(undefined, {type: at.DISCOVERY_STREAM_SPOCS_ENDPOINT, data: "foo.com"});
       assert.equal(state.spocs.spocs_endpoint, "foo.com");
@@ -721,11 +709,6 @@ describe("Reducers", () => {
     });
     it("should not update state for empty action.data on PLACES_LINK_BLOCKED", () => {
       const newState = DiscoveryStream(undefined, {type: at.PLACES_LINK_BLOCKED});
-      assert.equal(newState, INITIAL_STATE.DiscoveryStream);
-    });
-    it("should not update state if feeds are not loaded", () => {
-      const deleteAction = {type: at.PLACES_LINK_BLOCKED, data: {url: "foo.com"}};
-      const newState = DiscoveryStream(undefined, deleteAction);
       assert.equal(newState, INITIAL_STATE.DiscoveryStream);
     });
     it("should not update state if spocs and feeds data is undefined", () => {

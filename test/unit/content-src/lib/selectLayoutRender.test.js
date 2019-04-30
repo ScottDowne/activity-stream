@@ -27,7 +27,8 @@ describe("selectLayoutRender", () => {
 
   it("should add .data property from feeds to each compontent in .layout", () => {
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: FAKE_LAYOUT}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
 
     const result = selectLayoutRender(store.getState().DiscoveryStream, {}, []);
 
@@ -36,21 +37,11 @@ describe("selectLayoutRender", () => {
     assert.deepEqual(result[0].components[0], {type: "foo", feed: {url: "foo.com"}, data: {recommendations: ["foo", "bar"]}});
   });
 
-  it("should return layout property without data if feed isn't available", () => {
-    store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: FAKE_LAYOUT}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: {}});
-
-    const result = selectLayoutRender(store.getState().DiscoveryStream, {}, []);
-
-    assert.lengthOf(result, 1);
-    assert.propertyVal(result[0], "width", 3);
-    assert.deepEqual(result[0].components[0], FAKE_LAYOUT[0].components[0]);
-  });
-
   it("should return feed data offset by layout set prop", () => {
     const fakeLayout = [{width: 3, components: [{type: "foo", properties: {offset: 1}, feed: {url: "foo.com"}}]}];
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
 
     const result = selectLayoutRender(store.getState().DiscoveryStream, {}, []);
 
@@ -63,7 +54,8 @@ describe("selectLayoutRender", () => {
     const fakeSpocsData = {lastUpdated: 0, spocs: {spocs: ["fooSpoc", "barSpoc"]}};
 
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
     store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_UPDATE, data: fakeSpocsData});
     const randomStub = globals.sandbox.stub(global.Math, "random").returns(0.1);
 
@@ -83,7 +75,8 @@ describe("selectLayoutRender", () => {
     const fakeSpocsData = {lastUpdated: 0, spocs: {spocs: ["fooSpoc", "barSpoc"]}};
 
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
     store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_UPDATE, data: fakeSpocsData});
     const randomStub = globals.sandbox.stub(global.Math, "random").returns(0.6);
 
@@ -101,7 +94,8 @@ describe("selectLayoutRender", () => {
     const fakeSpocsData = {lastUpdated: 0, spocs: {spocs: ["fooSpoc", "barSpoc"]}};
 
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
     store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_UPDATE, data: fakeSpocsData});
     const randomStub = globals.sandbox.stub(global.Math, "random");
 
@@ -121,7 +115,8 @@ describe("selectLayoutRender", () => {
     const fakeSpocsData = {lastUpdated: 0, spocs: {spocs: ["fooSpoc", "barSpoc"]}};
 
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
     store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_UPDATE, data: fakeSpocsData});
     const randomStub = globals.sandbox.stub(global.Math, "random");
 
@@ -139,7 +134,8 @@ describe("selectLayoutRender", () => {
     const fakeSpocsData = {lastUpdated: 0, spocs: {spocs: ["fooSpoc", "barSpoc"]}};
 
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: FAKE_FEEDS});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: FAKE_FEEDS["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
     store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_UPDATE, data: fakeSpocsData});
     const randomStub = globals.sandbox.stub(global.Math, "random");
 
@@ -162,7 +158,8 @@ describe("selectLayoutRender", () => {
     ];
     const fakeFeeds = {"foo.com": {data: {recommendations: fakeRecommendations}}};
     store.dispatch({type: at.DISCOVERY_STREAM_LAYOUT_UPDATE, data: {layout: fakeLayout}});
-    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: fakeFeeds});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEED_UPDATE, data: {feed: fakeFeeds["foo.com"], url: "foo.com"}});
+    store.dispatch({type: at.DISCOVERY_STREAM_FEEDS_UPDATE});
 
     const result = selectLayoutRender(store.getState().DiscoveryStream, {}, []);
 
