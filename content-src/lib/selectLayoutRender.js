@@ -30,19 +30,13 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
   function maybeInjectSpocs(data, spocsConfig) {
     // Do we ever expect to possibly have a spoc.
     if (data && spocsConfig && spocsConfig.positions && spocsConfig.positions.length) {
-      // We expect a spoc, and spocs are done loading.
-      if (spocs.loaded) {
-        // We expect a spoc, spocs are loaded, but the server returned no spocs.
-        if (!spocs.data.spocs || !spocs.data.spocs.length) {
-          return data;
-        }
-
-        // We expect a spoc, spocs are loaded, and we have spocs available.
-        return rollForSpocs(data, spocsConfig);
+      // We expect a spoc, spocs are loaded, but the server returned no spocs.
+      if (!spocs.data.spocs || !spocs.data.spocs.length) {
+        return data;
       }
 
-      // We expected a spoc, but non are loaded yet.
-      return data;
+      // We expect a spoc, spocs are loaded, and we have spocs available.
+      return rollForSpocs(data, spocsConfig);
     }
 
     return data;

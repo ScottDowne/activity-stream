@@ -87,12 +87,6 @@ describe("<DiscoveryStreamBase>", () => {
     globals.restore();
   });
 
-  it("should render null if spocs not loaded", () => {
-    wrapper = mountComponent({spocs: {loaded: false, data: {spocs: null}}});
-
-    assert.equal(wrapper.type(), null);
-  });
-
   it("should render nothing with no layout", () => {
     assert.ok(wrapper.exists());
     assert.isEmpty(wrapper.children());
