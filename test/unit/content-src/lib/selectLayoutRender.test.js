@@ -170,4 +170,9 @@ describe("selectLayoutRender", () => {
     assert.equal(recommendations[2].pos, 2);
     assert.equal(recommendations[3].pos, undefined);
   });
+  describe("maybeInjectSpocs", () => {
+    it("", () => {
+
+    });
+  });
 });

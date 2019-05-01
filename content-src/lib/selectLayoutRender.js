@@ -3,18 +3,14 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
   let spocIndex = 0;
   let bufferRollCache = [];
 
-  // rickRollCache stores random probability values for each spoc position. This cache is empty
-  // on page refresh and gets filled with random values on first render inside maybeInjectSpocs.
-  const isFirstRun = !rickRollCache.length;
-
   function rollForSpocs(data, spocsConfig) {
     const recommendations = [...data.recommendations];
     for (let position of spocsConfig.positions) {
       // Cache random number for a position
       let rickRoll;
-      if (isFirstRun) {
+      if (!rickRollCache.length) {
         rickRoll = Math.random();
-        rickRollCache.push(rickRoll);
+        bufferRollCache.push(rickRoll);
       } else {
         rickRoll = rickRollCache.shift();
         bufferRollCache.push(rickRoll);
@@ -80,11 +76,6 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
 
     data = maybeInjectSpocs(data, component.spocs);
 
-    // If empty, fill rickRollCache with random probability values from bufferRollCache
-    if (!rickRollCache.length) {
-      rickRollCache.push(...bufferRollCache);
-    }
-
     let items = 0;
     if (component.properties && component.properties.items) {
       items = Math.min(component.properties.items, data.recommendations.length);
@@ -101,10 +92,10 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
   };
 
   const renderLayout = () => {
-    const renderedLayout = [];
+    const renderedLayoutArray = [];
     for (const row of layout.filter(r => r.components.length)) {
       let components = [];
-      renderedLayout.push({
+      renderedLayoutArray.push({
         ...row,
         components,
       });
@@ -114,7 +105,7 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
           // Are we still waiting on a feed/spocs, render what we have, and bail out early.
           if (!feeds.data[component.feed.url] ||
             (spocsConfig && spocsConfig.positions && spocsConfig.positions.length && !spocs.loaded)) {
-            return renderedLayout;
+            return renderedLayoutArray;
           }
           components.push(handleComponent(component));
         } else {
@@ -122,8 +113,15 @@ export const selectLayoutRender = (state, prefs, rickRollCache) => {
         }
       }
     }
-    return renderedLayout;
+    return renderedLayoutArray;
   };
 
-  return renderLayout();
+  const renderedLayout = renderLayout();
+
+  // If empty, fill rickRollCache with random probability values from bufferRollCache
+  if (!rickRollCache.length) {
+    rickRollCache.push(...bufferRollCache);
+  }
+
+  return renderedLayout;
 };
