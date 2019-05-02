@@ -10,6 +10,8 @@ XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 ChromeUtils.defineModuleGetter(this, "perfService", "resource://activity-stream/common/PerfService.jsm");
 const {UserDomainAffinityProvider} = ChromeUtils.import("resource://activity-stream/lib/UserDomainAffinityProvider.jsm");
 
+Components.utils.import("resource://gre/modules/Timer.jsm");
+
 const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
 const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm");
 
@@ -241,28 +243,37 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         newFeeds[url] = {};
         const feedPromise = this.getComponentFeed(url, isStartup);
 
-        feedPromise.then(feed => {
-          newFeeds[url] = this.filterRecommendations(feed);
-          sendUpdate({
-            type: at.DISCOVERY_STREAM_FEED_UPDATE,
-            data: {
-              feed: newFeeds[url],
-              url,
-            },
-          });
+        if (!this._time) {
+          this._time = 1000;
+        } else {
+          this._time = this._time + 1000;
+        }
+        let time = this._time;
 
-          // We grab affinities off the first feed for the moment.
-          // Ideally this would be returned from the server on the layout,
-          // or from another endpoint.
-          if (!this.affinities) {
-            const {settings} = feed.data;
-            this.affinities = {
-              timeSegments: settings.timeSegments,
-              parameterSets: settings.domainAffinityParameterSets,
-              maxHistoryQueryResults: settings.maxHistoryQueryResults || DEFAULT_MAX_HISTORY_QUERY_RESULTS,
-              version: settings.version,
-            };
-          }
+        feedPromise.then(feed => {
+          setTimeout(() => {
+            newFeeds[url] = this.filterRecommendations(feed);
+            sendUpdate({
+              type: at.DISCOVERY_STREAM_FEED_UPDATE,
+              data: {
+                feed: newFeeds[url],
+                url,
+              },
+            });
+
+            // We grab affinities off the first feed for the moment.
+            // Ideally this would be returned from the server on the layout,
+            // or from another endpoint.
+            if (!this.affinities) {
+              const {settings} = feed.data;
+              this.affinities = {
+                timeSegments: settings.timeSegments,
+                parameterSets: settings.domainAffinityParameterSets,
+                maxHistoryQueryResults: settings.maxHistoryQueryResults || DEFAULT_MAX_HISTORY_QUERY_RESULTS,
+                version: settings.version,
+              };
+            }
+          }, time);
         }).catch(/* istanbul ignore next */ error => {
           Cu.reportError(`Error trying to load component feed ${url}: ${error}`);
         });
@@ -727,6 +738,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   async reset() {
+          this._time = 0;
     this.resetImpressionPrefs();
     await this.resetCache();
     if (this.loaded) {
