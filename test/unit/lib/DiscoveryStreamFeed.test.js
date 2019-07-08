@@ -63,6 +63,14 @@ describe("DiscoveryStreamFeed", () => {
       }
     }
 
+    const FakeKeyValueService = {
+      getOrCreate: async () => ({
+        put: async () => {},
+        get: async (key, defaultValue) => defaultValue,
+        clear: async () => {},
+      }),
+    };
+
     // Fetch
     fetchStub = sandbox.stub(global, "fetch");
 
@@ -77,6 +85,7 @@ describe("DiscoveryStreamFeed", () => {
     }));
 
     globals = new GlobalOverrider();
+    globals.set("KeyValueService", FakeKeyValueService);
     globals.set("gUUIDGenerator", { generateUUID: () => FAKE_UUID });
 
     // Feed

@@ -19,20 +19,13 @@ ChromeUtils.defineModuleGetter(
   "perfService",
   "resource://activity-stream/common/PerfService.jsm"
 );
-ChromeUtils.defineModuleGetter(
-  this,
-  "OS",
-  "resource://gre/modules/osfile.jsm"
-);
+ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 const { UserDomainAffinityProvider } = ChromeUtils.import(
   "resource://activity-stream/lib/UserDomainAffinityProvider.jsm"
 );
 
 const { actionTypes: at, actionCreators: ac } = ChromeUtils.import(
   "resource://activity-stream/common/Actions.jsm"
-);
-const { PersistentCache } = ChromeUtils.import(
-  "resource://activity-stream/lib/PersistentCache.jsm"
 );
 const { KeyValueService } = ChromeUtils.import(
   "resource://gre/modules/kvstore.jsm"
@@ -69,7 +62,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     this.loaded = false;
 
     // Persistent cache for remote endpoint data.
-    this._kvstore = KeyValueService.getOrCreate(OS.Constants.Path.localProfileDir, CACHE_KEY);
+    this._kvstore = KeyValueService.getOrCreate(
+      OS.Constants.Path.localProfileDir,
+      CACHE_KEY
+    );
     this._impressionId = this.getOrCreateImpressionId();
     // Internal in-memory cache for parsing json prefs.
     this._prefCache = {};
@@ -80,10 +76,12 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     const result = await kvstore.get(key, JSON.stringify(defaultValue));
     return JSON.parse(result);
   }
+
   async kvstoreSet(key, value) {
     const kvstore = await this._kvstore;
     return kvstore.put(key, JSON.stringify(value));
   }
+
   async kvstoreClear() {
     const kvstore = await this._kvstore;
     return kvstore.clear();
@@ -247,7 +245,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    * @param {boolean} is this check done at initial browser load
    */
   isExpired({ data, key, url, isStartup }) {
-    const {layout, spocs, feeds} = data;
+    const { layout, spocs, feeds } = data;
     const updateTimePerComponent = {
       layout: LAYOUT_UPDATE_TIME,
       spocs: SPOCS_FEEDS_UPDATE_TIME,
@@ -282,12 +280,12 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     const spocs = await this.kvstoreGet("spocs", {});
     const feeds = await this.kvstoreGet("feeds", {});
     return {
-      layout: this.isExpired({data: {layout: layout}, key: "layout"}),
-      spocs: this.isExpired({data: {spocs: spocs}, key: "spocs"}),
+      layout: this.isExpired({ data: { layout }, key: "layout" }),
+      spocs: this.isExpired({ data: { spocs }, key: "spocs" }),
       feeds:
         !feeds ||
         Object.keys(feeds).some(url =>
-          this.isExpired({data: {feeds: feeds}, key: "feed", url})
+          this.isExpired({ data: { feeds }, key: "feed", url })
         ),
     };
   }
@@ -306,7 +304,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
 
   async fetchLayout(isStartup) {
     let layout = await this.kvstoreGet("layout", {});
-    if (this.isExpired({data: {layout: layout}, key: "layout", isStartup})) {
+    if (this.isExpired({ data: { layout }, key: "layout", isStartup })) {
       const start = perfService.absNow();
       const layoutResponse = await this.fetchFromEndpoint(
         this.config.layout_endpoint
@@ -491,7 +489,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     let spocs = await this.kvstoreGet("spocs", {});
 
     if (this.showSpocs) {
-      if (this.isExpired({data: {spocs: spocs}, key: "spocs", isStartup})) {
+      if (this.isExpired({ data: { spocs }, key: "spocs", isStartup })) {
         const endpoint = this.store.getState().DiscoveryStream.spocs
           .spocs_endpoint;
         const start = perfService.absNow();
@@ -807,10 +805,11 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
 
   async getComponentFeed(feedUrl, isStartup) {
     const feeds = await this.kvstoreGet("feeds", {});
-    console.log(feeds)
 
     let feed = feeds ? feeds[feedUrl] : null;
-    if (this.isExpired({data: {feeds: feeds}, key: "feed", url: feedUrl, isStartup})) {
+    if (
+      this.isExpired({ data: { feeds }, key: "feed", url: feedUrl, isStartup })
+    ) {
       const feedResponse = await this.fetchFromEndpoint(feedUrl);
       if (feedResponse) {
         const { data: scoredItems } = this.scoreItems(
