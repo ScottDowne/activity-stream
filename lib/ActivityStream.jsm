@@ -463,7 +463,7 @@ const PREFS_CONFIG = new Map([
           api_key_pref: "extensions.pocket.oAuthConsumerKey",
           collapsible: true,
           enabled: isEnabled,
-          show_spocs: showSpocs({ geo }),
+          show_spocs: true, //showSpocs({ geo }),
           hardcoded_layout: true,
           personalized: false,
           // This is currently an exmple layout used for dev purposes.

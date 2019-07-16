@@ -52,6 +52,8 @@ const PREF_SPOCS_CLEAR_ENDPOINT = "discoverystream.endpointSpocsClear";
 const PREF_SHOW_SPONSORED = "showSponsored";
 const PREF_SPOC_IMPRESSIONS = "discoverystream.spoc.impressions";
 const PREF_REC_IMPRESSIONS = "discoverystream.rec.impressions";
+const SPOCS_GEOS = ["US"];
+const GEO_PREF = "browser.search.region";
 
 let defaultLayoutResp;
 
@@ -143,8 +145,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   get showSpocs() {
-    // Combine user-set sponsored opt-out with Mozilla-set config
+    let geo = Services.prefs.getStringPref(GEO_PREF);
+    // Combine user-set sponsored opt-out with Mozilla-set config with geo enabled spocs.
     return (
+      SPOCS_GEOS.includes(geo) &&
       this.store.getState().Prefs.values[PREF_SHOW_SPONSORED] &&
       this.config.show_spocs
     );
