@@ -1289,7 +1289,7 @@ defaultLayoutResp = {
         {
           type: "CardGrid",
           properties: {
-            items: 21,
+            items: 3,
           },
           header: {
             title: "",
@@ -1305,14 +1305,54 @@ defaultLayoutResp = {
               {
                 index: 2,
               },
+            ],
+          },
+        },
+        {
+          type: "CardGrid",
+          properties: {
+            items: 3,
+            offset: 3,
+          },
+          header: {
+            title: "",
+          },
+          feed: {
+            embed_reference: null,
+            url:
+              "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?version=3&consumer_key=$apiKey&locale_lang=en-US&count=30",
+          },
+          spocs: {
+            probability: 1,
+            positions: [
               {
-                index: 4,
+                index: 1,
+              },
+            ],
+          },
+        },
+        {
+          type: "CardGrid",
+          properties: {
+            items: 15,
+            offset: 6,
+          },
+          header: {
+            title: "",
+          },
+          feed: {
+            embed_reference: null,
+            url:
+              "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?version=3&consumer_key=$apiKey&locale_lang=en-US&count=30",
+          },
+          spocs: {
+            probability: 1,
+            positions: [
+              {
+                index: 5,
               },
               {
-                index: 11,
-              },
-              {
-                index: 20,
+                index: 14,
               },
             ],
           },
