@@ -38,7 +38,7 @@ const CACHE_KEY = "discovery_stream";
 const LAYOUT_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
 const STARTUP_CACHE_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000; // 1 week
 const COMPONENT_FEEDS_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
-const SPOCS_FEEDS_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
+const SPOCS_FEEDS_UPDATE_TIME = 1000; // 30 minutes
 const DEFAULT_RECS_EXPIRE_TIME = 60 * 60 * 1000; // 1 hour
 const MIN_DOMAIN_AFFINITIES_UPDATE_TIME = 12 * 60 * 60 * 1000; // 12 hours
 const MAX_LIFETIME_CAP = 500; // Guard against misconfiguration on the server
@@ -851,9 +851,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
    */
   async refreshAll(options = {}) {
     const { updateOpenTabs, isStartup } = options;
+    const dispatchQueue = [];
     const dispatch = updateOpenTabs
       ? action => this.store.dispatch(ac.BroadcastToContent(action))
-      : this.store.dispatch;
+      : (e) => {dispatchQueue.push(e)};
 
     this.loadAffinityScoresCache();
     await this.loadLayout(dispatch, isStartup);
@@ -865,6 +866,9 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         Cu.reportError(`Error trying to load component feeds: ${error}`)
       ),
     ]);
+    if (updateOpenTabs) {
+      // Go through dispatchQueue and fire off dispatches
+    }
     if (isStartup) {
       await this._maybeUpdateCachedData();
     }

@@ -19,7 +19,7 @@ ChromeUtils.defineModuleGetter(
 );
 
 // Frequency at which SYSTEM_TICK events are fired
-const SYSTEM_TICK_INTERVAL = 5 * 60 * 1000;
+const SYSTEM_TICK_INTERVAL = 20000;
 
 this.SystemTickFeed = class SystemTickFeed {
   init() {
