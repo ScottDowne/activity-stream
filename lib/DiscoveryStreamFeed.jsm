@@ -854,7 +854,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     const dispatchQueue = [];
     const dispatch = updateOpenTabs
       ? action => this.store.dispatch(ac.BroadcastToContent(action))
-      : (e) => {dispatchQueue.push(e)};
+      : e => dispatchQueue.push(e);
 
     this.loadAffinityScoresCache();
     await this.loadLayout(dispatch, isStartup);
@@ -866,8 +866,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         Cu.reportError(`Error trying to load component feeds: ${error}`)
       ),
     ]);
-    if (updateOpenTabs) {
-      // Go through dispatchQueue and fire off dispatches
+    if (!updateOpenTabs) {
+      dispatchQueue.forEach(e => this.store.dispatch(e));
     }
     if (isStartup) {
       await this._maybeUpdateCachedData();
