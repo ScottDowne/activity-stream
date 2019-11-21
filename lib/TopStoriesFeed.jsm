@@ -68,9 +68,9 @@ this.TopStoriesFeed = class TopStoriesFeed {
     // if needed lazy load activity stream top stories feed based on
     // actual user preference when INIT and PREF_CHANGED is invoked
     this.discoveryStreamEnabled =
-      ds &&
+      (ds &&
       ds.value &&
-      JSON.parse(ds.value).enabled &&
+      !JSON.parse(ds.value).geo_disabled) &&
       Services.prefs.getBoolPref(DISCOVERY_STREAM_PREF_ENABLED_PATH, false);
     if (!this.discoveryStreamEnabled) {
       this.initializeProperties();
@@ -791,7 +791,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
 
     try {
       this.discoveryStreamEnabled =
-        JSON.parse(_dsPref).enabled &&
+        !JSON.parse(_dsPref).geo_disabled &&
         this.store.getState().Prefs.values[DISCOVERY_STREAM_PREF_ENABLED];
     } catch (e) {
       // Load activity stream top stories if fail to determine discovery stream state

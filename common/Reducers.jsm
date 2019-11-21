@@ -51,7 +51,7 @@ const INITIAL_STATE = {
   // This is the new pocket configurable layout state.
   DiscoveryStream: {
     // This is a JSON-parsed copy of the discoverystream.config pref value.
-    config: { enabled: false, layout_endpoint: "" },
+    config: { layout_endpoint: "" },
     layout: [],
     lastUpdated: null,
     isPrivacyInfoModalVisible: false,

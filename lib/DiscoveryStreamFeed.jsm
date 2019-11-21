@@ -152,9 +152,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         `Could not parse preference. Try resetting ${PREF_CONFIG} in about:config. ${e}`
       );
     }
-    this._prefCache.config.enabled =
-      this._prefCache.config.enabled &&
-      this.store.getState().Prefs.values[PREF_ENABLED];
+    this._prefCache.config.geo_disabled =
+      this._prefCache.config.geo_disabled;
 
     return this._prefCache.config;
   }
@@ -1191,7 +1190,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   async onPrefChange() {
     // We always want to clear the cache/state if the pref has changed
     await this.reset();
-    if (this.config.enabled) {
+    if (!this.config.geo_disabled) {
       // Load data from all endpoints
       await this.enable();
     }
@@ -1287,15 +1286,15 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         // During the initialization of Firefox:
         // 1. Set-up listeners and initialize the redux state for config;
         this.setupPrefs();
-        // 2. If config.enabled is true, start loading data.
-        if (this.config.enabled) {
+        // 2. If config.geo_disabled is false, start loading data.
+        if (!this.config.geo_disabled) {
           await this.enable();
         }
         break;
       case at.SYSTEM_TICK:
         // Only refresh if we loaded once in .enable()
         if (
-          this.config.enabled &&
+          !this.config.geo_disabled &&
           this.loaded &&
           (await this.checkIfAnyCacheExpired())
         ) {

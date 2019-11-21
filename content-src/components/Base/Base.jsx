@@ -129,7 +129,7 @@ export class BaseContent extends React.PureComponent {
     const prefs = props.Prefs.values;
 
     const isDiscoveryStream =
-      props.DiscoveryStream.config && props.DiscoveryStream.config.enabled;
+      props.DiscoveryStream.config && !props.DiscoveryStream.config.geo_disabled;
     let filteredSections = props.Sections;
 
     // Filter out highlights for DS

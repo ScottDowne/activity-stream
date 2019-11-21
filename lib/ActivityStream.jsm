@@ -489,7 +489,7 @@ const PREFS_CONFIG = new Map([
         return JSON.stringify({
           api_key_pref: "extensions.pocket.oAuthConsumerKey",
           collapsible: true,
-          enabled: isEnabled,
+          geo_disabled: !isEnabled,
           show_spocs: showSpocs({ geo }),
           hardcoded_layout: true,
           personalized: true,
