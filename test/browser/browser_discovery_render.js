@@ -22,6 +22,7 @@ test_newtab({
     const learnMore = content.document.querySelector(
       ".ds-layout a[href$=new_tab_learn_more]"
     );
+
     is(
       learnMore.textContent,
       "What’s Pocket?",
